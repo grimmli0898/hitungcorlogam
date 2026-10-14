@@ -52,12 +52,32 @@
             pointer-events: none;
             filter: grayscale(40%);
         }
+        /* Subkon Detail Table Layout Optimization */
+        .subkon-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .subkon-detail-table {
+            min-width: 820px;
+            width: 100%;
+            table-layout: auto;
+        }
+        .subkon-detail-table th,
+        .subkon-detail-table td {
+            vertical-align: top;
+        }
+        /* Matikan total efek sticky/floating pada panel kanan */
+        #right-summary-panel {
+            position: static !important;
+            top: auto !important;
+            transform: none !important;
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
     <!-- Top Header -->
-    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30 no-print">
+    <header class="bg-slate-900 text-white shadow-lg relative z-30 no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
                 <div class="bg-orange-600 p-2.5 rounded-xl shadow-inner flex items-center justify-center">
@@ -160,25 +180,34 @@
 
                         <!-- Subcontract Specific Parameters Panel (Hidden when INHOUSE) -->
                         <div id="subkon-config-panel" class="hidden bg-blue-50/60 border border-blue-200 rounded-xl p-4 space-y-4">
-                            <div class="flex flex-wrap items-center justify-between border-b border-blue-200/80 pb-2 gap-2">
+                            <div class="flex flex-wrap items-center justify-between border-b border-blue-200/80 pb-2.5 gap-2">
                                 <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
                                     <i class="fa-solid fa-file-invoice text-blue-600"></i> Parameter Biaya Subkon / Vendor Pengecoran Luar
                                 </span>
                                 <span class="text-[11px] bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-semibold" id="subkon-type-desc">Skema: Beli Putus Coran Mentah</span>
                             </div>
 
-                            <!-- Row 1: Vendor Name & Billing Method Selector -->
-                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                            <!-- Row 1: Vendor Name & Toggle Mode (Multi-Row Detail vs Quick Input) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                                 <div class="sm:col-span-5">
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Vendor / Mitra Cor</label>
                                     <input type="text" id="subVendorName" value="CV. Mitra Ceper Foundry" oninput="calculateAll()" class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg bg-white font-medium">
                                 </div>
 
-                                <!-- Selector Skema Tagihan Vendor (untuk SUB_FULL) -->
+                                <!-- Toggle Mode Input Nota Subkon (untuk SUB_FULL) -->
                                 <div id="wrap-sub-scheme-select" class="sm:col-span-7">
-                                    <label class="block text-xs font-semibold text-blue-900 mb-1">Cara Hitung Tagihan dari Vendor Subkon</label>
-                                    <select id="subPricingBasis" onchange="onSubBasisChange()" class="w-full px-3 py-2 text-xs sm:text-sm border-2 border-blue-400 rounded-lg bg-white font-bold text-blue-950 focus:outline-none">
-                                        <option value="INVOICE_TOTAL" selected>1. Langsung Input Total Invoice Subkon (Rp 1x Projek)</option>
+                                    <label class="block text-xs font-semibold text-blue-900 mb-1">Mode Input Tagihan Nota Subkon</label>
+                                    <div class="grid grid-cols-2 gap-1.5 bg-slate-200/80 p-1 rounded-xl border border-slate-300">
+                                        <button type="button" id="btn-submode-detail" onclick="setSubInputMode('DETAIL_TABLE')" class="py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-orange-600 text-white shadow-sm">
+                                            <i class="fa-solid fa-table-list"></i> Rincian Nota (Multi-Item)
+                                        </button>
+                                        <button type="button" id="btn-submode-quick" onclick="setSubInputMode('QUICK')" class="py-1.5 px-2.5 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-slate-700 hover:bg-white/60">
+                                            <i class="fa-solid fa-bolt"></i> Input Cepat (Gelondongan)
+                                        </button>
+                                    </div>
+                                    <select id="subPricingBasis" onchange="onSubBasisChange()" class="hidden">
+                                        <option value="DETAIL_TABLE" selected>Rincian Item Nota/Invoice</option>
+                                        <option value="INVOICE_TOTAL">1. Langsung Input Total Invoice Subkon (Rp 1x Projek)</option>
                                         <option value="PER_KG_RAW">2. Per Kg Berat Mentah / Sebelum Finishing (Timbangan Subkon)</option>
                                         <option value="PER_PCS">3. Harga Borongan Per Piece (Rp / Pcs)</option>
                                         <option value="PER_KG_NET">4. Per Kg Berat Bersih Produk Jadi</option>
@@ -201,95 +230,187 @@
 
                             <!-- Row 2: Dynamic Inputs based on Selected Subkon Billing Method -->
                             <div id="wrap-sub-full-rate" class="bg-white p-3.5 rounded-xl border border-blue-200 space-y-3">
-                                <!-- Mode A: Direct Total Invoice (Default) -->
-                                <div id="sub-panel-invoice" class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                                    <div>
-                                        <label class="block text-xs font-bold text-blue-900 mb-1">Total Tagihan / Invoice dari Vendor Subkon (Rp)</label>
-                                        <div class="flex items-center">
-                                            <span class="bg-blue-100 border border-r-0 border-blue-400 text-blue-900 text-xs font-bold px-3 py-2 rounded-l-lg">Rp</span>
-                                            <input type="text" inputmode="numeric" id="subInvoiceTotalRp" value="46.200.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-r-lg font-mono font-extrabold text-blue-950 bg-blue-50/20">
-                                        </div>
-                                    </div>
-                                    <div class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                                        <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i> Masukkan nilai total sesuai nota/invoice dari perusahaan subkon (sudah termasuk cor, resin, cetak, dll). Otomatis dibagi ke <b id="lbl-sub-inv-qty">100</b> pcs.
-                                    </div>
-                                </div>
 
-                                <!-- Mode B: Per Kg Raw Weight (Timbangan Mentah Sebelum Finishing) -->
-                                <div id="sub-panel-rawkg" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1">Cara Input Berat Mentah Subkon</label>
-                                        <select id="subRawWeightInputMode" onchange="onSubBasisChange()" class="w-full px-2.5 py-2 text-xs font-bold border border-slate-300 rounded-lg bg-slate-50 text-slate-800">
-                                            <option value="TOTAL_BATCH">Total Timbangan 1 Projek (kg)</option>
-                                            <option value="PER_PCS">Berat Mentah per Pcs (kg/pcs)</option>
-                                        </select>
-                                    </div>
-                                    <div id="wrap-sub-raw-batch">
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1" title="Total berat timbangan dari surat jalan subkon sebelum kita bubut/finishing">Total Berat Mentah 1 Order (kg)</label>
-                                        <div class="flex items-center">
-                                            <input type="text" inputmode="decimal" id="subTotalRawWeightKg" value="2.800" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-l-lg font-bold text-slate-900">
-                                            <span class="bg-slate-100 border border-l-0 border-blue-400 px-2.5 py-2 text-xs font-bold text-slate-700 rounded-r-lg">kg total</span>
+                                <!-- PANEL BARU: TABEL RINCIAN ITEM NOTA SUBKON (MULTI-ROW) -->
+                                <div id="sub-panel-detail-table" class="space-y-3">
+                                    <div class="flex flex-wrap justify-between items-center gap-2 bg-slate-900 text-white px-3.5 py-2.5 rounded-xl">
+                                        <div>
+                                            <h4 class="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                                                <i class="fa-solid fa-receipt"></i> Tabel Rincian Item Nota / Invoice Subkon
+                                            </h4>
+                                            <p class="text-[11px] text-slate-300">Input campuran beberapa komponen cor, berat timbangan & ongkos cetak dalam 1 nota</p>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <button type="button" onclick="resetSubInvoiceTable()" class="bg-slate-700 hover:bg-rose-600 text-slate-200 hover:text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
+                                                <i class="fa-solid fa-rotate-left"></i> Reset Tabel
+                                            </button>
+                                            <button type="button" onclick="addSubInvoiceItem()" class="bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1">
+                                                <i class="fa-solid fa-plus"></i> Tambah Item
+                                            </button>
                                         </div>
                                     </div>
-                                    <div id="wrap-sub-raw-pcs" class="hidden">
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1" title="Berat 1 pcs coran mentah sebelum dibubut/gerinda oleh kita">Berat Mentah Sebelum Bubut (kg/pcs)</label>
-                                        <div class="flex items-center">
-                                            <input type="number" id="subRawWeightPerPcs" value="28" min="0.1" step="0.1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-l-lg font-bold text-slate-900">
-                                            <span class="bg-slate-100 border border-l-0 border-blue-400 px-2.5 py-2 text-xs font-bold text-slate-700 rounded-r-lg">kg/pcs</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1">Harga Cor per Kg Mentah (Rp/kg)</label>
-                                        <div class="flex items-center">
-                                            <span class="bg-blue-100 border border-r-0 border-blue-400 text-blue-900 text-xs font-bold px-2.5 py-2 rounded-l-lg">Rp</span>
-                                            <input type="text" inputmode="decimal" id="subRawPrice" value="16.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-r-lg font-mono font-bold text-blue-900 bg-white">
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <!-- Mode C & D: Per Pcs or Per Kg Net -->
-                                <div id="sub-panel-unitprice" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1" id="lbl-sub-unit-price">Harga Borongan Cor Mentah</label>
-                                        <div class="flex items-center">
-                                            <span class="bg-blue-100 border border-r-0 border-blue-400 text-blue-900 text-xs font-bold px-3 py-2 rounded-l-lg">Rp</span>
-                                            <input type="text" inputmode="decimal" id="subUnitPriceVal" value="450.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 font-mono font-bold text-blue-900 bg-white">
-                                            <span id="lbl-sub-unit-suffix" class="bg-slate-100 border border-l-0 border-blue-400 px-3 py-2 text-xs font-bold text-slate-700 rounded-r-lg">/ pcs</span>
-                                        </div>
+                                    <!-- Responsive Wide Table with Horizontal Scroll Protection -->
+                                    <div class="subkon-table-container border border-slate-200 rounded-xl shadow-sm bg-white">
+                                        <table class="subkon-detail-table text-left border-collapse text-xs">
+                                            <thead>
+                                                <tr class="bg-slate-800 text-slate-200 uppercase text-[10px] tracking-wider">
+                                                    <th class="py-2.5 px-3 min-w-[210px] w-[28%]">Nama Item / Komponen</th>
+                                                    <th class="py-2.5 px-2 text-center w-[72px] min-w-[68px]">Qty (Pcs)</th>
+                                                    <th class="py-2.5 px-2 min-w-[155px] w-[19%]">Berat Timbangan</th>
+                                                    <th class="py-2.5 px-2 text-right min-w-[125px] w-[15%]">Tarif Cor / Kg</th>
+                                                    <th class="py-2.5 px-2 min-w-[165px] w-[20%]">Ongkos Cetak / Inti</th>
+                                                    <th class="py-2.5 px-3 text-right min-w-[130px] w-[14%]">Subtotal Item</th>
+                                                    <th class="py-2.5 px-2 text-center w-[40px]"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="sub-invoice-items-tbody" class="divide-y divide-slate-200 bg-white">
+                                                <!-- Dynamic rows rendered via JS -->
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <div class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200" id="lbl-sub-unit-hint">
-                                        Dihitung langsung berdasarkan jumlah pcs order.
+                                    <div class="flex justify-between items-center text-[10px] text-slate-400 px-1">
+                                        <span><i class="fa-solid fa-arrows-left-right mr-1"></i>Geser tabel ke samping bila layar sempit</span>
+                                        <span>Semua kolom otomatis menghitung subtotal real-time</span>
                                     </div>
-                                </div>
 
-                                <!-- Optional Extra Charge per Pcs/Project from Subkon (Biaya Cetak, Resin, Furan, Core, dll) -->
-                                <div class="pt-2.5 border-t border-slate-200/80">
-                                    <div class="flex flex-wrap items-center justify-between gap-2">
-                                        <label class="flex items-center gap-2 text-xs font-bold text-blue-950 cursor-pointer">
-                                            <input type="checkbox" id="chk-sub-extra" onchange="calculateAll()" class="w-4 h-4 text-blue-600 rounded">
-                                            <span>Tambahan Biaya Cetak / Pasir Resin / Inti / Lainnya dari Subkon (Opsional)</span>
-                                        </label>
-                                        <span class="text-[11px] font-mono font-semibold text-blue-800" id="lbl-sub-extra-summary">Non-Aktif (Rp 0)</span>
-                                    </div>
-                                    <div id="wrap-sub-extra-fields" class="hidden grid grid-cols-1 sm:grid-cols-12 gap-2.5 mt-2.5 bg-blue-50/50 p-2.5 rounded-lg border border-blue-200">
-                                        <div class="sm:col-span-5">
-                                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Keterangan Tambahan Vendor</label>
-                                            <input type="text" id="subExtraDesc" value="Tambahan Jasa Cetak Resin / Core" oninput="calculateAll()" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded bg-white">
+                                    <!-- Summary Accumulation Bar -->
+                                    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-3.5 rounded-xl border border-slate-700 shadow-inner">
+                                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2.5 border-b border-slate-700/80">
+                                            <span class="text-[11px] font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                                                <i class="fa-solid fa-calculator"></i> Ringkasan Akumulasi Otomatis Nota Subkon
+                                            </span>
+                                            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">
+                                                <i class="fa-solid fa-link mr-1"></i>Tersinkronisasi ke Kalkulasi Utama
+                                            </span>
                                         </div>
-                                        <div class="sm:col-span-4">
-                                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Nominal Biaya Tambahan</label>
-                                            <div class="flex items-center">
-                                                <span class="bg-white border border-r-0 border-slate-300 text-slate-600 text-xs font-bold px-2 py-1.5 rounded-l">Rp</span>
-                                                <input type="text" inputmode="numeric" id="subExtraCostVal" value="25.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-2.5 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-r bg-white">
+                                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center">
+                                            <div class="bg-slate-800/90 p-2 rounded-lg border border-slate-700">
+                                                <span class="text-[10px] text-slate-400 block">Total Qty Order</span>
+                                                <span class="text-xs sm:text-sm font-extrabold font-mono text-white" id="sub-sum-qty">41 Pcs</span>
+                                            </div>
+                                            <div class="bg-slate-800/90 p-2 rounded-lg border border-slate-700">
+                                                <span class="text-[10px] text-slate-400 block">Total Berat Coran</span>
+                                                <span class="text-xs sm:text-sm font-extrabold font-mono text-amber-400" id="sub-sum-weight">395 kg</span>
+                                            </div>
+                                            <div class="bg-slate-800/90 p-2 rounded-lg border border-slate-700">
+                                                <span class="text-[10px] text-slate-400 block">Rata-rata Berat/Pcs</span>
+                                                <span class="text-xs sm:text-sm font-bold font-mono text-slate-200" id="sub-sum-avg-weight">9,63 kg/pcs</span>
+                                            </div>
+                                            <div class="bg-slate-800/90 p-2 rounded-lg border border-orange-500/40">
+                                                <span class="text-[10px] text-orange-300 block">Total Tagihan Subkon</span>
+                                                <span class="text-xs sm:text-sm font-extrabold font-mono text-orange-400" id="sub-sum-total-rp">Rp 6.942.500</span>
+                                            </div>
+                                            <div class="col-span-2 sm:col-span-1 bg-slate-800/90 p-2 rounded-lg border border-emerald-500/40">
+                                                <span class="text-[10px] text-emerald-300 block">Rata-rata HPP Cor/Pcs</span>
+                                                <span class="text-xs sm:text-sm font-extrabold font-mono text-emerald-400" id="sub-sum-avg-hpp">Rp 169.329</span>
                                             </div>
                                         </div>
-                                        <div class="sm:col-span-3">
-                                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Satuan Tagih</label>
-                                            <select id="subExtraBasis" onchange="calculateAll()" class="w-full px-2 py-1.5 text-xs font-bold border border-slate-300 rounded bg-white text-blue-900">
-                                                <option value="PER_PCS">Per Pcs</option>
-                                                <option value="PER_PROJECT">1x Projek (Total)</option>
-                                                <option value="PER_KG_RAW">Per Kg Mentah</option>
+                                    </div>
+                                </div>
+
+                                <!-- WRAPPER MODE INPUT CEPAT (GELONDONGAN) -->
+                                <div id="sub-quick-mode-wrapper" class="hidden space-y-3">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 bg-blue-50/70 p-2.5 rounded-lg border border-blue-200">
+                                        <span class="text-xs font-bold text-blue-900">Pilih Skema Input Cepat:</span>
+                                        <select id="subQuickSchemeSelect" onchange="onQuickSchemeChange()" class="px-3 py-1.5 text-xs font-bold border border-blue-400 rounded-lg bg-white text-blue-950 focus:outline-none">
+                                            <option value="INVOICE_TOTAL" selected>1. Langsung Input Total Invoice Gelondongan (Rp 1x Projek)</option>
+                                            <option value="PER_KG_RAW">2. Per Kg Berat Mentah / Sebelum Finishing</option>
+                                            <option value="PER_PCS">3. Harga Borongan Per Piece (Rp / Pcs)</option>
+                                            <option value="PER_KG_NET">4. Per Kg Berat Bersih Produk Jadi</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Mode A: Direct Total Invoice (Default Quick) -->
+                                    <div id="sub-panel-invoice" class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                        <div>
+                                            <label class="block text-xs font-bold text-blue-900 mb-1">Total Tagihan / Invoice dari Vendor Subkon (Rp)</label>
+                                            <div class="flex items-center">
+                                                <span class="bg-blue-100 border border-r-0 border-blue-400 text-blue-900 text-xs font-bold px-3 py-2 rounded-l-lg">Rp</span>
+                                                <input type="text" inputmode="numeric" id="subInvoiceTotalRp" value="46.200.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-r-lg font-mono font-extrabold text-blue-950 bg-blue-50/20">
+                                            </div>
+                                        </div>
+                                        <div class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                                            <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i> Masukkan nilai total sesuai nota/invoice dari perusahaan subkon (sudah termasuk cor, resin, cetak, dll). Otomatis dibagi ke <b id="lbl-sub-inv-qty">100</b> pcs.
+                                        </div>
+                                    </div>
+
+                                    <!-- Mode B: Per Kg Raw Weight (Timbangan Mentah Sebelum Finishing) -->
+                                    <div id="sub-panel-rawkg" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-700 mb-1">Cara Input Berat Mentah Subkon</label>
+                                            <select id="subRawWeightInputMode" onchange="onSubBasisChange()" class="w-full px-2.5 py-2 text-xs font-bold border border-slate-300 rounded-lg bg-slate-50 text-slate-800">
+                                                <option value="TOTAL_BATCH">Total Timbangan 1 Projek (kg)</option>
+                                                <option value="PER_PCS">Berat Mentah per Pcs (kg/pcs)</option>
                                             </select>
+                                        </div>
+                                        <div id="wrap-sub-raw-batch">
+                                            <label class="block text-xs font-semibold text-slate-700 mb-1" title="Total berat timbangan dari surat jalan subkon sebelum kita bubut/finishing">Total Berat Mentah 1 Order (kg)</label>
+                                            <div class="flex items-center">
+                                                <input type="text" inputmode="decimal" id="subTotalRawWeightKg" value="2.800" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-l-lg font-bold text-slate-900">
+                                                <span class="bg-slate-100 border border-l-0 border-blue-400 px-2.5 py-2 text-xs font-bold text-slate-700 rounded-r-lg">kg total</span>
+                                            </div>
+                                        </div>
+                                        <div id="wrap-sub-raw-pcs" class="hidden">
+                                            <label class="block text-xs font-semibold text-slate-700 mb-1" title="Berat 1 pcs coran mentah sebelum dibubut/gerinda oleh kita">Berat Mentah Sebelum Bubut (kg/pcs)</label>
+                                            <div class="flex items-center">
+                                                <input type="number" id="subRawWeightPerPcs" value="28" min="0.1" step="0.1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-l-lg font-bold text-slate-900">
+                                                <span class="bg-slate-100 border border-l-0 border-blue-400 px-2.5 py-2 text-xs font-bold text-slate-700 rounded-r-lg">kg/pcs</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-700 mb-1">Harga Cor per Kg Mentah (Rp/kg)</label>
+                                            <div class="flex items-center">
+                                                <span class="bg-blue-100 border border-r-0 border-blue-400 text-blue-900 text-xs font-bold px-2.5 py-2 rounded-l-lg">Rp</span>
+                                                <input type="text" inputmode="decimal" id="subRawPrice" value="16.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-r-lg font-mono font-bold text-blue-900 bg-white">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mode C & D: Per Pcs or Per Kg Net -->
+                                    <div id="sub-panel-unitprice" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-700 mb-1" id="lbl-sub-unit-price">Harga Borongan Cor Mentah</label>
+                                            <div class="flex items-center">
+                                                <span class="bg-blue-100 border border-r-0 border-blue-400 text-blue-900 text-xs font-bold px-3 py-2 rounded-l-lg">Rp</span>
+                                                <input type="text" inputmode="decimal" id="subUnitPriceVal" value="450.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 font-mono font-bold text-blue-900 bg-white">
+                                                <span id="lbl-sub-unit-suffix" class="bg-slate-100 border border-l-0 border-blue-400 px-3 py-2 text-xs font-bold text-slate-700 rounded-r-lg">/ pcs</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200" id="lbl-sub-unit-hint">
+                                            Dihitung langsung berdasarkan jumlah pcs order.
+                                        </div>
+                                    </div>
+
+                                    <!-- Optional Extra Charge per Pcs/Project from Subkon (Only for Quick Mode) -->
+                                    <div class="pt-2.5 border-t border-slate-200/80">
+                                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                            <label class="flex items-center gap-2 text-xs font-bold text-blue-950 cursor-pointer">
+                                                <input type="checkbox" id="chk-sub-extra" onchange="calculateAll()" class="w-4 h-4 text-blue-600 rounded">
+                                                <span>Tambahan Biaya Cetak / Pasir Resin / Inti / Lainnya dari Subkon (Opsional)</span>
+                                            </label>
+                                            <span class="text-[11px] font-mono font-semibold text-blue-800" id="lbl-sub-extra-summary">Non-Aktif (Rp 0)</span>
+                                        </div>
+                                        <div id="wrap-sub-extra-fields" class="hidden grid grid-cols-1 sm:grid-cols-12 gap-2.5 mt-2.5 bg-blue-50/50 p-2.5 rounded-lg border border-blue-200">
+                                            <div class="sm:col-span-5">
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Keterangan Tambahan Vendor</label>
+                                                <input type="text" id="subExtraDesc" value="Tambahan Jasa Cetak Resin / Core" oninput="calculateAll()" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded bg-white">
+                                            </div>
+                                            <div class="sm:col-span-4">
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Nominal Biaya Tambahan</label>
+                                                <div class="flex items-center">
+                                                    <span class="bg-white border border-r-0 border-slate-300 text-slate-600 text-xs font-bold px-2 py-1.5 rounded-l">Rp</span>
+                                                    <input type="text" inputmode="numeric" id="subExtraCostVal" value="25.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-2.5 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-r bg-white">
+                                                </div>
+                                            </div>
+                                            <div class="sm:col-span-3">
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Satuan Tagih</label>
+                                                <select id="subExtraBasis" onchange="calculateAll()" class="w-full px-2 py-1.5 text-xs font-bold border border-slate-300 rounded bg-white text-blue-900">
+                                                    <option value="PER_PCS">Per Pcs</option>
+                                                    <option value="PER_PROJECT">1x Projek (Total)</option>
+                                                    <option value="PER_KG_RAW">Per Kg Mentah</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -816,8 +937,8 @@
 
             </div>
 
-            <!-- Right Column: Real-Time Summary & Cost Breakdown (5 Cols) -->
-            <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-28">
+            <!-- Right Column: Real-Time Summary & Cost Breakdown (5 Cols - Static Normal Scroll) -->
+            <div id="right-summary-panel" class="lg:col-span-5 space-y-6 static">
                 
                 <!-- Executive Pricing Card -->
                 <div class="bg-slate-900 text-white rounded-2xl shadow-xl overflow-hidden border border-slate-800">
@@ -1301,6 +1422,205 @@
         // Current Production Mode ('INHOUSE' | 'SUB_FULL' | 'SUB_TOLL')
         let currentProdMode = 'INHOUSE';
 
+        // Default Multi-Row Subcontract Invoice Items
+        const defaultSubInvoiceItems = [
+            {
+                id: 101,
+                name: 'Ornamen Kepala',
+                qty: 20,
+                weightMode: 'TOTAL_KG', // 'TOTAL_KG' | 'PER_PCS_KG'
+                weightVal: 185,
+                ratePerKg: 16500,
+                extraMoldingVal: 15000,
+                extraMoldingMode: 'PER_PCS' // 'PER_PCS' | 'FLAT_TOTAL'
+            },
+            {
+                id: 102,
+                name: 'Ornamen Sayap',
+                qty: 21,
+                weightMode: 'PER_PCS_KG',
+                weightVal: 10,
+                ratePerKg: 16500,
+                extraMoldingVal: 200000,
+                extraMoldingMode: 'FLAT_TOTAL'
+            }
+        ];
+
+        let subInvoiceItems = JSON.parse(JSON.stringify(defaultSubInvoiceItems));
+
+        // Render Multi-Row Subkon Invoice Table
+        function renderSubInvoiceTable() {
+            const tbody = document.getElementById('sub-invoice-items-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            subInvoiceItems.forEach((item, idx) => {
+                const qty = Math.max(1, Number(item.qty) || 1);
+                const wVal = Math.max(0, Number(item.weightVal) || 0);
+                const totalKg = item.weightMode === 'TOTAL_KG' ? wVal : (wVal * qty);
+                const pcsKg = item.weightMode === 'TOTAL_KG' ? (totalKg / qty) : wVal;
+                const rateKg = Math.max(0, Number(item.ratePerKg) || 0);
+                const castingCost = totalKg * rateKg;
+
+                const extraVal = Math.max(0, Number(item.extraMoldingVal) || 0);
+                const extraCost = item.extraMoldingMode === 'PER_PCS' ? (extraVal * qty) : extraVal;
+                const subtotalItem = castingCost + extraCost;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-orange-50/40 transition align-top';
+                tr.innerHTML = `
+                    <td class="p-2.5 min-w-[210px]">
+                        <input type="text" value="${item.name}" oninput="updateSubInvoiceItem(${idx}, 'name', this.value)" placeholder="Contoh: Ornamen Kepala / Tutup Roofdrain..." title="${item.name}" class="w-full min-w-[190px] px-2.5 py-1.5 text-xs font-bold text-slate-800 border border-slate-300 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none bg-white">
+                        <span class="text-[10px] text-slate-400 block mt-1 font-mono leading-tight sub-row-cast-breakdown">Cor: ${formatRp(castingCost)} ${extraCost > 0 ? '+ Cetak: ' + formatRp(extraCost) : ''}</span>
+                    </td>
+                    <td class="p-2 w-[72px] min-w-[68px]">
+                        <input type="text" inputmode="numeric" value="${qty.toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'qty', this.value)" class="w-full px-1.5 py-1.5 text-xs font-mono font-bold text-center text-slate-900 border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white">
+                    </td>
+                    <td class="p-2 min-w-[155px]">
+                        <div class="flex items-stretch">
+                            <input type="number" step="0.1" min="0" value="${wVal}" oninput="updateSubInvoiceItem(${idx}, 'weightVal', this.value)" class="w-full min-w-[65px] px-2 py-1.5 text-xs font-mono font-bold text-slate-900 border border-slate-300 rounded-l-lg focus:border-orange-500 focus:outline-none bg-white">
+                            <select onchange="updateSubInvoiceItem(${idx}, 'weightMode', this.value)" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-700 text-[10px] font-bold px-1.5 py-1.5 rounded-r-lg focus:outline-none shrink-0 cursor-pointer">
+                                <option value="TOTAL_KG" ${item.weightMode === 'TOTAL_KG' ? 'selected' : ''}>Tot Kg</option>
+                                <option value="PER_PCS_KG" ${item.weightMode === 'PER_PCS_KG' ? 'selected' : ''}>Kg/Pcs</option>
+                            </select>
+                        </div>
+                        <span class="text-[10px] text-slate-500 block mt-1 font-mono leading-tight sub-row-weight-hint">
+                            Total: <b>${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg</b> (${pcsKg.toFixed(2)} kg/pcs)
+                        </span>
+                    </td>
+                    <td class="p-2 min-w-[125px]">
+                        <div class="flex items-stretch">
+                            <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-500 text-[10px] font-bold px-1.5 py-1.5 rounded-l-lg flex items-center shrink-0">Rp</span>
+                            <input type="text" inputmode="numeric" value="${Math.round(rateKg).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'ratePerKg', this.value)" class="w-full min-w-[80px] px-2 py-1.5 text-xs font-mono font-bold text-right text-slate-900 border border-slate-300 rounded-r-lg focus:border-orange-500 focus:outline-none bg-white">
+                        </div>
+                    </td>
+                    <td class="p-2 min-w-[165px]">
+                        <div class="flex items-stretch">
+                            <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-500 text-[10px] font-bold px-1.5 py-1.5 rounded-l-lg flex items-center shrink-0">Rp</span>
+                            <input type="text" inputmode="numeric" value="${Math.round(extraVal).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'extraMoldingVal', this.value)" class="w-full min-w-[75px] px-2 py-1.5 text-xs font-mono font-semibold text-right text-slate-800 border border-slate-300 focus:border-orange-500 focus:outline-none bg-white">
+                            <select onchange="updateSubInvoiceItem(${idx}, 'extraMoldingMode', this.value)" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-700 text-[10px] font-bold px-1.5 py-1.5 rounded-r-lg focus:outline-none shrink-0 cursor-pointer">
+                                <option value="PER_PCS" ${item.extraMoldingMode === 'PER_PCS' ? 'selected' : ''}>/Pcs</option>
+                                <option value="FLAT_TOTAL" ${item.extraMoldingMode === 'FLAT_TOTAL' ? 'selected' : ''}>Total</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td class="p-2.5 text-right min-w-[130px] whitespace-nowrap">
+                        <span class="font-mono font-extrabold text-xs text-orange-700 block py-0.5 sub-row-subtotal">${formatRp(subtotalItem)}</span>
+                        <span class="text-[10px] font-mono text-slate-400 block sub-row-hpp-pcs">${formatRp(subtotalItem / qty)} /pcs</span>
+                    </td>
+                    <td class="p-2 text-center w-[40px]">
+                        <button type="button" onclick="removeSubInvoiceItem(${idx})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Hapus Baris">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateSubInvoiceItem(idx, field, rawVal) {
+            if (!subInvoiceItems[idx]) return;
+            if (field === 'name' || field === 'weightMode' || field === 'extraMoldingMode') {
+                subInvoiceItems[idx][field] = rawVal;
+            } else if (field === 'weightVal') {
+                subInvoiceItems[idx][field] = parseFloat(rawVal) || 0;
+            } else {
+                const cleanNum = parseFloat(String(rawVal).replace(/\./g, '').replace(',', '.')) || 0;
+                subInvoiceItems[idx][field] = cleanNum;
+            }
+
+            if (field === 'weightMode' || field === 'extraMoldingMode') {
+                renderSubInvoiceTable();
+            }
+            calculateAll(true, true);
+            updateSubTableLiveCells();
+        }
+
+        function updateSubTableLiveCells() {
+            const tbody = document.getElementById('sub-invoice-items-tbody');
+            if (!tbody) return;
+            const rows = tbody.querySelectorAll('tr');
+            subInvoiceItems.forEach((item, idx) => {
+                const tr = rows[idx];
+                if (!tr) return;
+                const qty = Math.max(1, Number(item.qty) || 1);
+                const wVal = Math.max(0, Number(item.weightVal) || 0);
+                const totalKg = item.weightMode === 'TOTAL_KG' ? wVal : (wVal * qty);
+                const pcsKg = item.weightMode === 'TOTAL_KG' ? (totalKg / qty) : wVal;
+                const rateKg = Math.max(0, Number(item.ratePerKg) || 0);
+                const castingCost = totalKg * rateKg;
+                const extraVal = Math.max(0, Number(item.extraMoldingVal) || 0);
+                const extraCost = item.extraMoldingMode === 'PER_PCS' ? (extraVal * qty) : extraVal;
+                const subtotalItem = castingCost + extraCost;
+
+                const castBreak = tr.querySelector('.sub-row-cast-breakdown');
+                if (castBreak) castBreak.innerText = `Cor: ${formatRp(castingCost)} ${extraCost > 0 ? '+ Cetak: ' + formatRp(extraCost) : ''}`;
+                const wHint = tr.querySelector('.sub-row-weight-hint');
+                if (wHint) wHint.innerHTML = `Total: <b>${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg</b> (${pcsKg.toFixed(2)} kg/pcs)`;
+                const subEl = tr.querySelector('.sub-row-subtotal');
+                if (subEl) subEl.innerText = formatRp(subtotalItem);
+                const hppEl = tr.querySelector('.sub-row-hpp-pcs');
+                if (hppEl) hppEl.innerText = `${formatRp(subtotalItem / qty)} /pcs`;
+            });
+        }
+
+        function addSubInvoiceItem() {
+            subInvoiceItems.push({
+                id: Date.now(),
+                name: 'Komponen Cor Baru #' + (subInvoiceItems.length + 1),
+                qty: 10,
+                weightMode: 'TOTAL_KG',
+                weightVal: 50,
+                ratePerKg: 16500,
+                extraMoldingVal: 0,
+                extraMoldingMode: 'PER_PCS'
+            });
+            renderSubInvoiceTable();
+            calculateAll(true, true);
+            showToast('Baris item nota subkon baru ditambahkan!');
+        }
+
+        function removeSubInvoiceItem(idx) {
+            if (subInvoiceItems.length <= 1) {
+                showToast('Minimal harus ada 1 item pada tabel nota subkon!');
+                return;
+            }
+            subInvoiceItems.splice(idx, 1);
+            renderSubInvoiceTable();
+            calculateAll(true, true);
+        }
+
+        function resetSubInvoiceTable() {
+            subInvoiceItems = JSON.parse(JSON.stringify(defaultSubInvoiceItems));
+            renderSubInvoiceTable();
+            calculateAll(true, true);
+            showToast('Tabel rincian nota subkon di-reset ke contoh awal!');
+        }
+
+        function setSubInputMode(mode) {
+            const btnDetail = document.getElementById('btn-submode-detail');
+            const btnQuick = document.getElementById('btn-submode-quick');
+            const basisSelect = document.getElementById('subPricingBasis');
+
+            if (mode === 'DETAIL_TABLE') {
+                basisSelect.value = 'DETAIL_TABLE';
+                btnDetail.className = 'py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-orange-600 text-white shadow-sm';
+                btnQuick.className = 'py-1.5 px-2.5 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-slate-700 hover:bg-white/60';
+            } else {
+                const quickVal = document.getElementById('subQuickSchemeSelect').value || 'INVOICE_TOTAL';
+                basisSelect.value = quickVal;
+                btnQuick.className = 'py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-blue-600 text-white shadow-sm';
+                btnDetail.className = 'py-1.5 px-2.5 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-slate-700 hover:bg-white/60';
+            }
+            onSubBasisChange();
+        }
+
+        function onQuickSchemeChange() {
+            const quickVal = document.getElementById('subQuickSchemeSelect').value;
+            document.getElementById('subPricingBasis').value = quickVal;
+            onSubBasisChange();
+        }
+
         // Customizable Project-based Labor Items (Section 4A - Mode PROJECT)
         let projectLaborItems = [
             { id: 1, checked: true, name: 'Upah Tim Gerinda, Fettling, Dempul & Pengecatan (1 Projek)', costProject: 1500000 },
@@ -1624,7 +1944,6 @@
                 yieldBadge.innerText = 'Mode Subkon: Berat Timbangan Vendor';
 
                 document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
-                syncSubkonWeightInputs('QTY');
                 onSubBasisChange();
             } else if (mode === 'SUB_TOLL') {
                 btnSubToll.className = 'text-left p-3 rounded-xl border-2 border-purple-600 bg-purple-50/60 transition flex flex-col justify-between';
@@ -1651,10 +1970,22 @@
 
         function onSubBasisChange() {
             const basis = document.getElementById('subPricingBasis').value;
+            const panelDetailTable = document.getElementById('sub-panel-detail-table');
+            const quickWrapper = document.getElementById('sub-quick-mode-wrapper');
             const panelInv = document.getElementById('sub-panel-invoice');
             const panelRawKg = document.getElementById('sub-panel-rawkg');
             const panelUnit = document.getElementById('sub-panel-unitprice');
 
+            if (basis === 'DETAIL_TABLE') {
+                panelDetailTable.classList.remove('hidden');
+                quickWrapper.classList.add('hidden');
+                renderSubInvoiceTable();
+                calculateAll(false, true);
+                return;
+            }
+
+            panelDetailTable.classList.add('hidden');
+            quickWrapper.classList.remove('hidden');
             panelInv.classList.add('hidden');
             panelRawKg.classList.add('hidden');
             panelUnit.classList.add('hidden');
@@ -1837,10 +2168,56 @@
         }
 
         // Main Calculation Function
-        function calculateAll(skipConsumableRender = false) {
+        function calculateAll(skipConsumableRender = false, skipSubTableRender = false) {
             if (!skipConsumableRender) {
                 renderConsumablesList();
                 renderProjectLaborList();
+            }
+            if (!skipSubTableRender && document.getElementById('subPricingBasis')?.value === 'DETAIL_TABLE') {
+                renderSubInvoiceTable();
+            }
+
+            // If in SUB_FULL + DETAIL_TABLE mode, synchronize accumulated Qty, Weight & Total Invoice to main inputs first
+            const subPricingBasis = document.getElementById('subPricingBasis').value;
+            let detailTableTotalQty = 0;
+            let detailTableTotalKg = 0;
+            let detailTableTotalRp = 0;
+
+            if (subInvoiceItems && subInvoiceItems.length > 0) {
+                subInvoiceItems.forEach(item => {
+                    const rQty = Math.max(1, Number(item.qty) || 1);
+                    const rWVal = Math.max(0, Number(item.weightVal) || 0);
+                    const rTotalKg = item.weightMode === 'TOTAL_KG' ? rWVal : (rWVal * rQty);
+                    const rRate = Math.max(0, Number(item.ratePerKg) || 0);
+                    const rCastCost = rTotalKg * rRate;
+                    const rExtraVal = Math.max(0, Number(item.extraMoldingVal) || 0);
+                    const rExtraCost = item.extraMoldingMode === 'PER_PCS' ? (rExtraVal * rQty) : rExtraVal;
+
+                    detailTableTotalQty += rQty;
+                    detailTableTotalKg += rTotalKg;
+                    detailTableTotalRp += (rCastCost + rExtraCost);
+                });
+            }
+
+            const avgWeightFromTable = detailTableTotalQty > 0 ? (detailTableTotalKg / detailTableTotalQty) : 1;
+            const avgHppFromTable = detailTableTotalQty > 0 ? (detailTableTotalRp / detailTableTotalQty) : 0;
+
+            // Update Summary Accumulation Bar in Subkon Detail Table
+            const elSumQty = document.getElementById('sub-sum-qty');
+            if (elSumQty) {
+                elSumQty.innerText = detailTableTotalQty.toLocaleString('id-ID') + ' Pcs';
+                document.getElementById('sub-sum-weight').innerText = detailTableTotalKg.toLocaleString('id-ID', {maximumFractionDigits: 1}) + ' kg';
+                document.getElementById('sub-sum-avg-weight').innerText = avgWeightFromTable.toFixed(2) + ' kg/pcs';
+                document.getElementById('sub-sum-total-rp').innerText = formatRp(detailTableTotalRp);
+                document.getElementById('sub-sum-avg-hpp').innerText = formatRp(avgHppFromTable);
+            }
+
+            if (currentProdMode === 'SUB_FULL' && subPricingBasis === 'DETAIL_TABLE' && detailTableTotalQty > 0) {
+                setFormattedVal('orderQty', detailTableTotalQty);
+                setFormattedVal('subSpecTotalWeight', Math.round(detailTableTotalKg));
+                document.getElementById('subSpecPcsWeight').value = +(avgWeightFromTable.toFixed(2));
+                document.getElementById('netWeight').value = +(avgWeightFromTable.toFixed(2));
+                setFormattedVal('subInvoiceTotalRp', Math.round(detailTableTotalRp));
             }
 
             // 1. Read Weights & Order Qty
@@ -2066,14 +2443,16 @@
             const inhouseHppPerKg = inhouseHppPerPcs / netW;
 
             // 8B. Calculate Subcontract (Outsourced Casting + Extra Fees + Transport + Moulding/Pattern + In-House Finishing)
-            const subPricingBasis = document.getElementById('subPricingBasis').value;
             document.getElementById('lbl-sub-inv-qty').innerText = qty.toLocaleString('id-ID');
 
             // Determine Raw Weight per Pcs & Batch from Subkon (Berat Mentah sebelum di-finishing oleh kita)
             const rawInputMode = document.getElementById('subRawWeightInputMode').value;
             let subRawWPerPcs = netW * 1.12;
             let subTotalRawWBatch = subRawWPerPcs * qty;
-            if (rawInputMode === 'TOTAL_BATCH') {
+            if (subPricingBasis === 'DETAIL_TABLE') {
+                subTotalRawWBatch = Math.max(0.1, detailTableTotalKg);
+                subRawWPerPcs = subTotalRawWBatch / qty;
+            } else if (rawInputMode === 'TOTAL_BATCH') {
                 subTotalRawWBatch = Math.max(netW * qty, getNum('subTotalRawWeightKg') || (netW * qty));
                 subRawWPerPcs = subTotalRawWBatch / qty;
             } else {
@@ -2084,7 +2463,11 @@
             // Base Vendor Casting Cost per Pcs
             let subVendorBasePerPcs = 0;
             let subBaseDescText = '';
-            if (subPricingBasis === 'INVOICE_TOTAL') {
+            if (subPricingBasis === 'DETAIL_TABLE') {
+                subVendorBasePerPcs = detailTableTotalRp / qty;
+                const itemNames = subInvoiceItems.map(i => `${i.name} (${i.qty} pcs)`).join(', ');
+                subBaseDescText = `${subInvoiceItems.length} Item Nota [${itemNames}] • Total ${detailTableTotalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg`;
+            } else if (subPricingBasis === 'INVOICE_TOTAL') {
                 const invTotal = getNum('subInvoiceTotalRp');
                 subVendorBasePerPcs = invTotal / qty;
                 subBaseDescText = `Sesuai Total Invoice Subkon ${formatRp(invTotal)}`;
@@ -2102,8 +2485,8 @@
                 subBaseDescText = `${netW} kg bersih × ${formatRp(netPriceKg)}/kg`;
             }
 
-            // Optional Extra Charges from Subkon (Biaya cetak, resin, pasir furan, inti, dll)
-            const isSubExtraChecked = document.getElementById('chk-sub-extra').checked;
+            // Optional Extra Charges from Subkon (Only applies in Quick Mode; Detail Table already includes per-row extra molding cost)
+            const isSubExtraChecked = subPricingBasis !== 'DETAIL_TABLE' && document.getElementById('chk-sub-extra').checked;
             document.getElementById('wrap-sub-extra-fields').classList.toggle('hidden', !isSubExtraChecked);
             let subExtraPerPcs = 0;
             if (isSubExtraChecked) {
@@ -2128,11 +2511,11 @@
             // Transport Ambil Coran (Per Kg vs Per 1x Projek)
             const subTransVal = getNum('subTransportVal');
             const subTransBasis = document.getElementById('subTransportBasis').value;
-            const weightForTransPerPcs = (subPricingBasis === 'PER_KG_RAW') ? subRawWPerPcs : netW;
+            const weightForTransPerPcs = (subPricingBasis === 'PER_KG_RAW' || subPricingBasis === 'DETAIL_TABLE') ? subRawWPerPcs : netW;
             let subTransportCostPerPcs = 0;
             if (subTransBasis === 'PER_PROJECT') {
                 subTransportCostPerPcs = subTransVal / qty;
-                document.getElementById('lbl-sub-trans-info').innerText = `1x Projek: ${formatRp(subTransVal)} (${formatRp(subTransportCostPerPcs)}/pcs)`;
+                document.getElementById('lbl-sub-trans-info').innerText = `${formatRp(subTransportCostPerPcs)}/pcs (Total: ${formatRp(subTransVal)})`;
             } else {
                 subTransportCostPerPcs = weightForTransPerPcs * subTransVal;
                 document.getElementById('lbl-sub-trans-info').innerText = `Total: ${formatRp(subTransportCostPerPcs * qty)} (${formatRp(subTransportCostPerPcs)}/pcs)`;
@@ -2506,6 +2889,7 @@
 
         // Initialize on Window Load
         window.onload = function() {
+            renderSubInvoiceTable();
             renderProjectLaborList();
             renderConsumablesList();
             syncYieldFromWeights();
