@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        html, body {
+            overscroll-behavior-x: none; /* Mencegah gesture swipe dua jari kiri/kanan untuk navigasi back/forward browser */
+        }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9;
@@ -52,19 +55,28 @@
             pointer-events: none;
             filter: grayscale(40%);
         }
-        /* Subkon Detail Table Layout Optimization */
-        .subkon-table-container {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .subkon-detail-table {
-            min-width: 820px;
+        /* Subkon 2-Tier Stacked Card Row & Zebra Striping (No Horizontal Scroll) */
+        .subkon-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             width: 100%;
-            table-layout: auto;
         }
-        .subkon-detail-table th,
-        .subkon-detail-table td {
-            vertical-align: top;
+        .subkon-item-card {
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .subkon-item-card:nth-child(odd) {
+            background-color: #1a202c;
+            border: 1px solid #2d3748;
+        }
+        .subkon-item-card:nth-child(even) {
+            background-color: #232b3e;
+            border: 1px solid #3b4760;
+        }
+        .subkon-item-card:hover {
+            border-color: #ea580c;
         }
         /* Matikan total efek sticky/floating pada panel kanan */
         #right-summary-panel {
@@ -276,28 +288,9 @@
                                         </div>
                                     </div>
 
-                                    <!-- Responsive Wide Table with Horizontal Scroll Protection -->
-                                    <div class="subkon-table-container border border-slate-200 rounded-xl shadow-sm bg-white">
-                                        <table class="subkon-detail-table text-left border-collapse text-xs">
-                                            <thead>
-                                                <tr class="bg-slate-800 text-slate-200 uppercase text-[10px] tracking-wider">
-                                                    <th class="py-2.5 px-3 min-w-[210px] w-[28%]">Nama Item / Komponen</th>
-                                                    <th class="py-2.5 px-2 text-center w-[72px] min-w-[68px]">Qty (Pcs)</th>
-                                                    <th class="py-2.5 px-2 min-w-[155px] w-[19%]">Berat Timbangan</th>
-                                                    <th class="py-2.5 px-2 text-right min-w-[125px] w-[15%]">Tarif Cor / Kg</th>
-                                                    <th class="py-2.5 px-2 min-w-[165px] w-[20%]">Ongkos Cetak / Inti</th>
-                                                    <th class="py-2.5 px-3 text-right min-w-[130px] w-[14%]">Subtotal Item</th>
-                                                    <th class="py-2.5 px-2 text-center w-[40px]"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="sub-invoice-items-tbody" class="divide-y divide-slate-200 bg-white">
-                                                <!-- Dynamic rows rendered via JS -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="flex justify-between items-center text-[10px] text-slate-400 px-1">
-                                        <span><i class="fa-solid fa-arrows-left-right mr-1"></i>Geser tabel ke samping bila layar sempit</span>
-                                        <span>Semua kolom otomatis menghitung subtotal real-time</span>
+                                    <!-- 2-Tier Stacked Card Container (100% Fit Width, No Horizontal Scroll) -->
+                                    <div id="sub-invoice-items-tbody" class="subkon-card-list">
+                                        <!-- Dynamic 2-tier stacked card rows rendered via JS -->
                                     </div>
 
                                     <!-- MODUL BARU: DAFTAR BIAYA TAMBAHAN DARI SUBKON (DINAMIS / CUSTOMIZABLE) -->
@@ -1514,6 +1507,23 @@
     <script>
         // Current Production Mode ('INHOUSE' | 'SUB_FULL' | 'SUB_TOLL')
         let currentProdMode = 'INHOUSE';
+        let isFormFilled = false;
+
+        // Tandai form sudah diisi/diubah ketika user mengetik atau mengubah opsi apa pun
+        document.addEventListener('input', () => {
+            isFormFilled = true;
+        });
+        document.addEventListener('change', () => {
+            isFormFilled = true;
+        });
+
+        // Proteksi sebelum reload / tutup halaman / navigasi keluar jika form sudah terisi
+        window.addEventListener('beforeunload', (e) => {
+            if (isFormFilled || (subInvoiceItems && subInvoiceItems.length > 0)) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
 
         // Default Multi-Row Subcontract Invoice Items
         const defaultSubInvoiceItems = [
@@ -1843,11 +1853,11 @@
             calculateAll(true, true);
         }
 
-        // Render Multi-Row Subkon Invoice Table
+        // Render Multi-Row Subkon Invoice Table (2-Tier Stacked Card Layout, No Horizontal Scroll)
         function renderSubInvoiceTable() {
-            const tbody = document.getElementById('sub-invoice-items-tbody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
+            const container = document.getElementById('sub-invoice-items-tbody');
+            if (!container) return;
+            container.innerHTML = '';
 
             subInvoiceItems.forEach((item, idx) => {
                 const qty = Math.max(1, Number(item.qty) || 1);
@@ -1860,56 +1870,80 @@
                 const extraVal = Math.max(0, Number(item.extraMoldingVal) || 0);
                 const extraCost = item.extraMoldingMode === 'PER_PCS' ? (extraVal * qty) : extraVal;
                 const subtotalItem = castingCost + extraCost;
+                const hppPerPcs = subtotalItem / qty;
+                const breakdownText = `Cor: ${formatRp(castingCost)}${extraCost > 0 ? ' + Cetak: ' + formatRp(extraCost) : ''} | ${formatRp(hppPerPcs)}/pcs`;
 
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-orange-50/40 transition align-top';
-                tr.innerHTML = `
-                    <td class="p-2.5 min-w-[210px]">
-                        <input type="text" value="${item.name}" oninput="updateSubInvoiceItem(${idx}, 'name', this.value)" placeholder="Contoh: Ornamen Kepala / Tutup Roofdrain..." title="${item.name}" class="w-full min-w-[190px] px-2.5 py-1.5 text-xs font-bold text-slate-800 border border-slate-300 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none bg-white">
-                        <span class="text-[10px] text-slate-400 block mt-1 font-mono leading-tight sub-row-cast-breakdown">Cor: ${formatRp(castingCost)} ${extraCost > 0 ? '+ Cetak: ' + formatRp(extraCost) : ''}</span>
-                    </td>
-                    <td class="p-2 w-[72px] min-w-[68px]">
-                        <input type="text" inputmode="numeric" value="${qty.toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'qty', this.value)" class="w-full px-1.5 py-1.5 text-xs font-mono font-bold text-center text-slate-900 border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white">
-                    </td>
-                    <td class="p-2 min-w-[155px]">
-                        <div class="flex items-stretch">
-                            <input type="number" step="0.1" min="0" value="${wVal}" oninput="updateSubInvoiceItem(${idx}, 'weightVal', this.value)" class="w-full min-w-[65px] px-2 py-1.5 text-xs font-mono font-bold text-slate-900 border border-slate-300 rounded-l-lg focus:border-orange-500 focus:outline-none bg-white">
-                            <select onchange="updateSubInvoiceItem(${idx}, 'weightMode', this.value)" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-700 text-[10px] font-bold px-1.5 py-1.5 rounded-r-lg focus:outline-none shrink-0 cursor-pointer">
-                                <option value="TOTAL_KG" ${item.weightMode === 'TOTAL_KG' ? 'selected' : ''}>Tot Kg</option>
-                                <option value="PER_PCS_KG" ${item.weightMode === 'PER_PCS_KG' ? 'selected' : ''}>Kg/Pcs</option>
-                            </select>
-                        </div>
-                        <span class="text-[10px] text-slate-500 block mt-1 font-mono leading-tight sub-row-weight-hint">
-                            Total: <b>${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg</b> (${pcsKg.toFixed(2)} kg/pcs)
+                const card = document.createElement('div');
+                card.className = 'subkon-item-card text-white shadow-sm';
+                card.innerHTML = `
+                    <!-- Tingkat Atas: Nomor Urut, Nama Item / Komponen, Qty (Pcs), Tombol Hapus -->
+                    <div class="flex items-center gap-2.5 pb-2.5 mb-2.5 border-b border-slate-700/80">
+                        <span class="w-6 h-6 rounded-full bg-orange-600 text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow" title="Item #${idx + 1}">
+                            ${idx + 1}
                         </span>
-                    </td>
-                    <td class="p-2 min-w-[125px]">
-                        <div class="flex items-stretch">
-                            <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-500 text-[10px] font-bold px-1.5 py-1.5 rounded-l-lg flex items-center shrink-0">Rp</span>
-                            <input type="text" inputmode="numeric" value="${Math.round(rateKg).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'ratePerKg', this.value)" class="w-full min-w-[80px] px-2 py-1.5 text-xs font-mono font-bold text-right text-slate-900 border border-slate-300 rounded-r-lg focus:border-orange-500 focus:outline-none bg-white">
+                        <div class="flex-1 min-w-0">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Nama Item / Komponen</label>
+                            <input type="text" value="${item.name}" oninput="updateSubInvoiceItem(${idx}, 'name', this.value)" placeholder="Contoh: Ornamen Kepala / Tutup Roofdrain..." title="${item.name}" class="w-full px-2.5 py-1.5 text-xs font-bold text-white bg-slate-900/90 border border-slate-600 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none">
                         </div>
-                    </td>
-                    <td class="p-2 min-w-[165px]">
-                        <div class="flex items-stretch">
-                            <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-500 text-[10px] font-bold px-1.5 py-1.5 rounded-l-lg flex items-center shrink-0">Rp</span>
-                            <input type="text" inputmode="numeric" value="${Math.round(extraVal).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'extraMoldingVal', this.value)" class="w-full min-w-[75px] px-2 py-1.5 text-xs font-mono font-semibold text-right text-slate-800 border border-slate-300 focus:border-orange-500 focus:outline-none bg-white">
-                            <select onchange="updateSubInvoiceItem(${idx}, 'extraMoldingMode', this.value)" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-700 text-[10px] font-bold px-1.5 py-1.5 rounded-r-lg focus:outline-none shrink-0 cursor-pointer">
-                                <option value="PER_PCS" ${item.extraMoldingMode === 'PER_PCS' ? 'selected' : ''}>/Pcs</option>
-                                <option value="FLAT_TOTAL" ${item.extraMoldingMode === 'FLAT_TOTAL' ? 'selected' : ''}>Total</option>
-                            </select>
+                        <div class="w-[76px] shrink-0">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5 text-center">Qty (Pcs)</label>
+                            <input type="text" inputmode="numeric" value="${qty.toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'qty', this.value)" class="w-full px-2 py-1.5 text-xs font-mono font-extrabold text-center text-amber-300 bg-slate-900/90 border border-slate-600 rounded-lg focus:border-orange-500 focus:outline-none">
                         </div>
-                    </td>
-                    <td class="p-2.5 text-right min-w-[130px] whitespace-nowrap">
-                        <span class="font-mono font-extrabold text-xs text-orange-700 block py-0.5 sub-row-subtotal">${formatRp(subtotalItem)}</span>
-                        <span class="text-[10px] font-mono text-slate-400 block sub-row-hpp-pcs">${formatRp(subtotalItem / qty)} /pcs</span>
-                    </td>
-                    <td class="p-2 text-center w-[40px]">
-                        <button type="button" onclick="removeSubInvoiceItem(${idx})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Hapus Baris">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
-                        </button>
-                    </td>
+                        <div class="shrink-0 self-end pb-0.5">
+                            <button type="button" onclick="removeSubInvoiceItem(${idx})" class="text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 p-2 rounded-lg transition" title="Hapus Baris Item #${idx + 1}">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tingkat Bawah: Berat Timbangan, Tarif Cor / Kg, Ongkos Cetak / Inti, Subtotal Item -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start">
+                        <!-- Berat Timbangan (3 Cols) -->
+                        <div class="sm:col-span-3">
+                            <label class="block text-[10px] font-semibold text-slate-300 mb-1">Berat Timbangan</label>
+                            <div class="flex items-stretch">
+                                <input type="number" step="0.1" min="0" value="${wVal}" oninput="updateSubInvoiceItem(${idx}, 'weightVal', this.value)" class="w-full min-w-0 px-2 py-1.5 text-xs font-mono font-bold text-white bg-slate-900/90 border border-slate-600 rounded-l-lg focus:border-orange-500 focus:outline-none">
+                                <select onchange="updateSubInvoiceItem(${idx}, 'weightMode', this.value)" class="bg-slate-800 border border-l-0 border-slate-600 text-amber-300 text-[10px] font-bold px-1.5 py-1.5 rounded-r-lg focus:outline-none shrink-0 cursor-pointer">
+                                    <option value="TOTAL_KG" ${item.weightMode === 'TOTAL_KG' ? 'selected' : ''}>Tot Kg</option>
+                                    <option value="PER_PCS_KG" ${item.weightMode === 'PER_PCS_KG' ? 'selected' : ''}>Kg-Pcs</option>
+                                </select>
+                            </div>
+                            <span class="text-[10px] text-slate-400 block mt-1 font-mono leading-tight sub-row-weight-hint">
+                                Total: <b class="text-slate-200">${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg</b> (${pcsKg.toFixed(2)} kg/pcs)
+                            </span>
+                        </div>
+
+                        <!-- Tarif Cor / Kg (3 Cols) -->
+                        <div class="sm:col-span-3">
+                            <label class="block text-[10px] font-semibold text-slate-300 mb-1">Tarif Cor / Kg</label>
+                            <div class="flex items-stretch">
+                                <span class="bg-slate-800 border border-r-0 border-slate-600 text-slate-400 text-[10px] font-bold px-2 py-1.5 rounded-l-lg flex items-center shrink-0">Rp</span>
+                                <input type="text" inputmode="numeric" value="${Math.round(rateKg).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'ratePerKg', this.value)" class="w-full min-w-0 px-2 py-1.5 text-xs font-mono font-bold text-right text-white bg-slate-900/90 border border-slate-600 rounded-r-lg focus:border-orange-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Ongkos Cetak / Inti (3 Cols) -->
+                        <div class="sm:col-span-3">
+                            <label class="block text-[10px] font-semibold text-slate-300 mb-1">Ongkos Cetak / Inti</label>
+                            <div class="flex items-stretch">
+                                <span class="bg-slate-800 border border-r-0 border-slate-600 text-slate-400 text-[10px] font-bold px-1.5 py-1.5 rounded-l-lg flex items-center shrink-0">Rp</span>
+                                <input type="text" inputmode="numeric" value="${Math.round(extraVal).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubInvoiceItem(${idx}, 'extraMoldingVal', this.value)" class="w-full min-w-0 px-2 py-1.5 text-xs font-mono font-semibold text-right text-white bg-slate-900/90 border border-slate-600 focus:border-orange-500 focus:outline-none">
+                                <select onchange="updateSubInvoiceItem(${idx}, 'extraMoldingMode', this.value)" class="bg-slate-800 border border-l-0 border-slate-600 text-amber-300 text-[10px] font-bold px-1.5 py-1.5 rounded-r-lg focus:outline-none shrink-0 cursor-pointer">
+                                    <option value="PER_PCS" ${item.extraMoldingMode === 'PER_PCS' ? 'selected' : ''}>/Pcs</option>
+                                    <option value="FLAT_TOTAL" ${item.extraMoldingMode === 'FLAT_TOTAL' ? 'selected' : ''}>Total</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Subtotal Item & Breakdown (3 Cols) -->
+                        <div class="sm:col-span-3 sm:text-right bg-slate-950/60 p-2 rounded-lg border border-slate-700/80">
+                            <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Subtotal Item</span>
+                            <span class="font-mono font-extrabold text-sm text-orange-400 block mt-0.5 sub-row-subtotal">${formatRp(subtotalItem)}</span>
+                            <span class="text-[10px] font-mono text-slate-400 block mt-0.5 leading-snug sub-row-cast-breakdown">${breakdownText}</span>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(card);
             });
         }
 
@@ -1935,12 +1969,12 @@
         }
 
         function updateSubTableLiveCells() {
-            const tbody = document.getElementById('sub-invoice-items-tbody');
-            if (!tbody) return;
-            const rows = tbody.querySelectorAll('tr');
+            const container = document.getElementById('sub-invoice-items-tbody');
+            if (!container) return;
+            const cards = container.querySelectorAll('.subkon-item-card');
             subInvoiceItems.forEach((item, idx) => {
-                const tr = rows[idx];
-                if (!tr) return;
+                const card = cards[idx];
+                if (!card) return;
                 const qty = Math.max(1, Number(item.qty) || 1);
                 const wVal = Math.max(0, Number(item.weightVal) || 0);
                 const totalKg = item.weightMode === 'TOTAL_KG' ? wVal : (wVal * qty);
@@ -1950,15 +1984,14 @@
                 const extraVal = Math.max(0, Number(item.extraMoldingVal) || 0);
                 const extraCost = item.extraMoldingMode === 'PER_PCS' ? (extraVal * qty) : extraVal;
                 const subtotalItem = castingCost + extraCost;
+                const hppPerPcs = subtotalItem / qty;
 
-                const castBreak = tr.querySelector('.sub-row-cast-breakdown');
-                if (castBreak) castBreak.innerText = `Cor: ${formatRp(castingCost)} ${extraCost > 0 ? '+ Cetak: ' + formatRp(extraCost) : ''}`;
-                const wHint = tr.querySelector('.sub-row-weight-hint');
-                if (wHint) wHint.innerHTML = `Total: <b>${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg</b> (${pcsKg.toFixed(2)} kg/pcs)`;
-                const subEl = tr.querySelector('.sub-row-subtotal');
+                const wHint = card.querySelector('.sub-row-weight-hint');
+                if (wHint) wHint.innerHTML = `Total: <b class="text-slate-200">${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg</b> (${pcsKg.toFixed(2)} kg/pcs)`;
+                const subEl = card.querySelector('.sub-row-subtotal');
                 if (subEl) subEl.innerText = formatRp(subtotalItem);
-                const hppEl = tr.querySelector('.sub-row-hpp-pcs');
-                if (hppEl) hppEl.innerText = `${formatRp(subtotalItem / qty)} /pcs`;
+                const castBreak = card.querySelector('.sub-row-cast-breakdown');
+                if (castBreak) castBreak.innerText = `Cor: ${formatRp(castingCost)}${extraCost > 0 ? ' + Cetak: ' + formatRp(extraCost) : ''} | ${formatRp(hppPerPcs)}/pcs`;
             });
         }
 
