@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoundryPro - Sistem HPP & Harga Jual Pengecoran Logam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            body {
+                background-color: white;
+            }
+        }
+        .tab-active {
+            border-bottom: 3px solid #ea580c;
+            color: #ea580c;
+            font-weight: 600;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Top Header -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-orange-600 p-2.5 rounded-xl shadow-inner flex items-center justify-center">
+                    <i class="fa-solid fa-fire-burner text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight flex items-center gap-2">
+                        FoundryPro <span class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2 py-0.5 rounded-full font-medium">ERP Costing v2.4</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Sistem Kalkulasi HPPLebur, Cetakan & Penetapan Harga Jual Cor Logam</p>
+                </div>
+            </div>
+
+            <!-- Preset Selector & Quick Actions -->
+            <div class="flex items-center flex-wrap gap-2">
+                <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
+                    <span class="text-xs text-slate-400 px-2"><i class="fa-solid fa-bolt text-amber-400 mr-1"></i>Preset Produk:</span>
+                    <button onclick="loadPreset('FC250')" class="text-xs px-2.5 py-1.5 rounded-md bg-slate-700 hover:bg-orange-600 transition text-white font-medium">Pulley FC250</button>
+                    <button onclick="loadPreset('FCD500')" class="text-xs px-2.5 py-1.5 rounded-md hover:bg-orange-600 transition text-slate-300 hover:text-white font-medium ml-1">Valve Body FCD500</button>
+                    <button onclick="loadPreset('AL')" class="text-xs px-2.5 py-1.5 rounded-md hover:bg-orange-600 transition text-slate-300 hover:text-white font-medium ml-1">Housing Aluminium</button>
+                </div>
+                <button onclick="saveToHistory()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Kalkulasi
+                </button>
+                <button onclick="openQuotationModal()" class="bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Buat Penawaran
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-slate-800/80 border-t border-slate-700/80">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6 overflow-x-auto text-sm">
+                <button onclick="switchTab('calculator')" id="tab-btn-calculator" class="py-3 px-1 tab-active transition whitespace-nowrap flex items-center gap-2">
+                    <i class="fa-solid fa-calculator"></i> 1. Kalkulator HPP & Harga Jual
+                </button>
+                <button onclick="switchTab('master')" id="tab-btn-master" class="py-3 px-1 text-slate-300 hover:text-white transition whitespace-nowrap flex items-center gap-2">
+                    <i class="fa-solid fa-database"></i> 2. Database Master Harga (Material & Tarif)
+                </button>
+                <button onclick="switchTab('history')" id="tab-btn-history" class="py-3 px-1 text-slate-300 hover:text-white transition whitespace-nowrap flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i> 3. Riwayat & Perbandingan Order
+                    <span id="history-badge" class="bg-orange-600 text-white text-xs px-1.5 py-0.2 rounded-full">2</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 no-print">
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+            <span id="toast-msg" class="text-sm font-medium">Data berhasil diperbarui!</span>
+        </div>
+
+        <!-- TAB 1: CALCULATOR -->
+        <div id="view-calculator" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left Column: Input Parameters (7 Cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Section 0: Mode Produksi (In-House vs Subkon / Maklon Cor) -->
+                <div class="bg-white rounded-2xl shadow-sm border-2 border-orange-500/80 overflow-hidden">
+                    <div class="bg-gradient-to-r from-orange-600 to-amber-600 px-5 py-3 flex justify-between items-center text-white">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-industry text-sm"></i>
+                            <h2 class="font-bold text-xs sm:text-sm uppercase tracking-wider">Mode Produksi: Cor Sendiri vs. Outsourcing (Subkon)</h2>
+                        </div>
+                        <span id="mode-active-pill" class="text-[11px] bg-white/20 px-2.5 py-0.5 rounded-full font-semibold">Cor Sendiri (In-House)</span>
+                    </div>
+
+                    <div class="p-5 space-y-4">
+                        <!-- 3 Mode Radio Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <button type="button" onclick="setProductionMode('INHOUSE')" id="btn-mode-inhouse" class="text-left p-3 rounded-xl border-2 border-orange-600 bg-orange-50/60 transition flex flex-col justify-between">
+                                <div class="flex justify-between items-center w-full mb-1">
+                                    <span class="font-bold text-xs text-orange-900">1. Cor Sendiri (In-House)</span>
+                                    <i class="fa-solid fa-fire-burner text-orange-600"></i>
+                                </div>
+                                <p class="text-[11px] text-slate-600 leading-tight">Lebur bahan baku, cetak pasir, fettling & finishing dikerjakan di pabrik sendiri.</p>
+                            </button>
+
+                            <button type="button" onclick="setProductionMode('SUB_FULL')" id="btn-mode-subfull" class="text-left p-3 rounded-xl border border-slate-200 hover:border-orange-400 bg-white transition flex flex-col justify-between">
+                                <div class="flex justify-between items-center w-full mb-1">
+                                    <span class="font-bold text-xs text-slate-800">2. Subkon Cor (Terima Mentah)</span>
+                                    <i class="fa-solid fa-truck-ramp-box text-blue-600"></i>
+                                </div>
+                                <p class="text-[11px] text-slate-500 leading-tight">Beli coran mentah (Rp/kg atau Rp/pcs) dari vendor luar. Kita hanya Finishing/Bubut.</p>
+                            </button>
+
+                            <button type="button" onclick="setProductionMode('SUB_TOLL')" id="btn-mode-subtoll" class="text-left p-3 rounded-xl border border-slate-200 hover:border-orange-400 bg-white transition flex flex-col justify-between">
+                                <div class="flex justify-between items-center w-full mb-1">
+                                    <span class="font-bold text-xs text-slate-800">3. Maklon / Titip Lebur</span>
+                                    <i class="fa-solid fa-handshake-angle text-purple-600"></i>
+                                </div>
+                                <p class="text-[11px] text-slate-500 leading-tight">Bahan baku ingot/scrap dari kita, bayar jasa cetak & lebur ke vendor luar.</p>
+                            </button>
+                        </div>
+
+                        <!-- Subcontract Specific Parameters Panel (Hidden when INHOUSE) -->
+                        <div id="subkon-config-panel" class="hidden bg-blue-50/60 border border-blue-200 rounded-xl p-4 space-y-4">
+                            <div class="flex items-center justify-between border-b border-blue-200/80 pb-2">
+                                <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-file-invoice text-blue-600"></i> Parameter Biaya Subkon / Vendor Pengecoran Luar
+                                </span>
+                                <span class="text-[11px] text-blue-700 font-medium" id="subkon-type-desc">Skema: Beli Putus Coran Mentah (As-Cast)</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Vendor / Mitra Cor</label>
+                                    <input type="text" id="subVendorName" value="CV. Mitra Ceper Foundry" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
+                                </div>
+                                <div id="wrap-sub-full-rate">
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Harga Beli Cor Mentah</label>
+                                    <div class="flex">
+                                        <input type="number" id="subRawPrice" value="16500" min="0" step="250" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-l-lg font-bold text-blue-900 bg-white">
+                                        <select id="subPricingBasis" onchange="calculateAll()" class="bg-blue-100 border border-l-0 border-blue-400 text-blue-900 text-xs font-bold px-2 rounded-r-lg">
+                                            <option value="PER_KG_NET">/ kg bersih</option>
+                                            <option value="PER_PCS">/ pcs</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="wrap-sub-toll-rate" class="hidden">
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Upah jasa cetak + lebur di luar (bahan baku dari kita)">Tarif Jasa Maklon Lebur (Rp/kg)</label>
+                                    <select id="subTollBasis" onchange="calculateAll()" class="hidden">
+                                        <option value="NET">Net</option>
+                                    </select>
+                                    <div class="flex items-center">
+                                        <input type="number" id="subTollFeePerKg" value="7500" min="0" step="250" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-400 rounded-l-lg font-bold text-purple-900 bg-white">
+                                        <span class="bg-purple-100 border border-l-0 border-purple-400 px-2.5 py-2 text-xs font-semibold text-purple-900 rounded-r-lg">/kg bersih</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Ongkos ambil barang cor mentah dari tempat subkon ke bengkel kita">Transport Ambil Coran (Rp/kg)</label>
+                                    <input type="number" id="subTransportPerKg" value="350" min="0" step="50" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kondisi Barang dari Subkon</label>
+                                    <select id="subCondition" onchange="onSubConditionChange()" class="w-full px-3 py-2 text-xs font-medium border border-slate-300 rounded-lg bg-white">
+                                        <option value="AS_CAST">As-Cast (Saluran sudah dipotong, kita tinggal Gerinda Halus + Bubut)</option>
+                                        <option value="FETTLED">Sudah Shotblast & Gerinda Halus (Kita hanya Machining + Cat + QC)</option>
+                                        <option value="RAW_GATING">Masih ada Riser/Saluran (Kita potong & gerinda sendiri di bengkel)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Risiko ditemukan keropos saat proses pembubutan di tempat kita yang tidak diganti vendor">Risiko Cacat Tersembunyi Saat Bubut (%)</label>
+                                    <input type="number" id="subHiddenDefectPct" value="2.0" min="0" max="30" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white font-semibold text-rose-800">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 1: Identitas & Spesifikasi Bobot -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2.5">
+                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">1</span>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Spesifikasi Komponen & Casting Yield</h2>
+                        </div>
+                        <span id="yield-status-badge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">Yield: 71.4% (Normal)</span>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Komponen / Barang Cor</label>
+                                <input type="text" id="partName" value="Pulley V-Belt SPB 300 x 4 Jalur" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Klien / Customer</label>
+                                <input type="text" id="clientName" value="PT. Maju Teknik Mandiri" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Spesifikasi Material</label>
+                                <select id="alloyGrade" onchange="onGradeChange()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none font-medium">
+                                    <option value="FC250">FC 250 (Cast Iron)</option>
+                                    <option value="FCD500">FCD 500 (Ductile Iron)</option>
+                                    <option value="SS400">SC 450 / Cast Steel</option>
+                                    <option value="AL_ADC12">Aluminium ADC12 / AlSi</option>
+                                    <option value="BRONZE">Bronze AB2 / Kuningan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Order (Pcs)</label>
+                                <input type="number" id="orderQty" value="100" min="1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Berat bersih produk setelah saluran potong">Berat Bersih / Net (kg/pcs)</label>
+                                <input type="number" id="netWeight" value="25" min="0.1" step="0.1" oninput="syncYieldFromWeights()" class="w-full px-3 py-2 text-sm border border-emerald-400 bg-emerald-50/30 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-bold text-emerald-900">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Berat coran + saluran turun (sprue), runner, dan penambah (riser)">Berat Tuang / Gross (kg/pcs)</label>
+                                <input type="number" id="grossWeight" value="35" min="0.1" step="0.1" oninput="syncYieldFromWeights()" class="w-full px-3 py-2 text-sm border border-orange-400 bg-orange-50/30 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none font-bold text-orange-900">
+                            </div>
+                        </div>
+
+                        <!-- Visual Yield Bar -->
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="font-medium text-slate-600">Proporsi Logam Cair per Pcs:</span>
+                                <span class="font-semibold text-slate-700">Produk Jadi: <b id="lbl-net-w">25.0 kg</b> | Saluran & Riser (Return Scrap): <b id="lbl-gating-w" class="text-orange-600">10.0 kg</b></span>
+                            </div>
+                            <div class="w-full h-3 bg-orange-200 rounded-full overflow-hidden flex">
+                                <div id="yield-bar-fill" class="bg-emerald-600 h-full transition-all duration-300" style="width: 71.4%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Bahan Baku & Charge Mix -->
+                <div id="section-raw-material" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-opacity duration-300">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2.5">
+                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">2</span>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Bahan Baku Logam Cair & Charge Mix</h2>
+                        </div>
+                        <span id="badge-sec2-status" class="text-xs text-slate-500">Harga mengacu pada Database Master</span>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <!-- Charge Mix Composition -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-slate-500 uppercase">
+                                        <th class="py-2 font-semibold">Komponen Muatan (Charge)</th>
+                                        <th class="py-2 font-semibold text-right">Harga Dasar (Rp/kg)</th>
+                                        <th class="py-2 font-semibold text-center w-28">Komposisi (%)</th>
+                                        <th class="py-2 font-semibold text-right">Kontribusi (Rp/kg)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="charge-mix-Rows">
+                                    <tr>
+                                        <td class="py-2.5 font-medium text-slate-800">Pig Iron / Ingot Utama</td>
+                                        <td class="py-2.5 text-right font-mono" id="disp-price-pig">Rp 9.500</td>
+                                        <td class="py-2.5 px-2"><input type="number" id="mixPig" value="25" min="0" max="100" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                        <td class="py-2.5 text-right font-mono font-semibold" id="contrib-pig">Rp 2.375</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 font-medium text-slate-800">Scrap Baja / Besi Beli</td>
+                                        <td class="py-2.5 text-right font-mono" id="disp-price-scrap">Rp 7.200</td>
+                                        <td class="py-2.5 px-2"><input type="number" id="mixScrap" value="45" min="0" max="100" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                        <td class="py-2.5 text-right font-mono font-semibold" id="contrib-scrap">Rp 3.240</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 font-medium text-slate-800">Scrap Balikan Internal (Return)</td>
+                                        <td class="py-2.5 text-right font-mono" id="disp-price-return">Rp 6.500</td>
+                                        <td class="py-2.5 px-2"><input type="number" id="mixReturn" value="27" min="0" max="100" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                        <td class="py-2.5 text-right font-mono font-semibold" id="contrib-return">Rp 1.755</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 font-medium text-slate-800">Ferroalloys (FeSi, FeMn, Karburiser)</td>
+                                        <td class="py-2.5 text-right font-mono" id="disp-price-alloy">Rp 28.500</td>
+                                        <td class="py-2.5 px-2"><input type="number" id="mixAlloy" value="3" min="0" max="100" step="0.5" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                        <td class="py-2.5 text-right font-mono font-semibold" id="contrib-alloy">Rp 855</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-t-2 border-slate-200 bg-slate-50 font-bold">
+                                        <td class="py-2.5 pl-2">Total Rata-Rata Muatan Dasar</td>
+                                        <td></td>
+                                        <td class="py-2.5 text-center" id="total-mix-pct">100%</td>
+                                        <td class="py-2.5 pr-2 text-right text-orange-700 font-mono" id="base-liquid-price">Rp 8.225 /kg</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Penyusutan berat karena oksidasi/terak saat peleburan">Melting Loss / Susut Lebur (%)</label>
+                                <input type="number" id="meltingLossPct" value="5" min="0" max="30" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Inokulan, Nodulizer Mg, Slag Coagulant per kg cairan">Biaya Inokulan & Fluks (Rp/kg cair)</label>
+                                <input type="number" id="inoculantCostPerKg" value="450" min="0" step="50" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Persentase saluran tuang yang berhasil diambil kembali untuk dilebur">Recovery Saluran Balikan (%)</label>
+                                <input type="number" id="scrapRecoveryPct" value="92" min="0" max="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Biaya Moulding, Cetakan, Inti & Pola -->
+                <div id="section-molding" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-opacity duration-300">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2.5">
+                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">3</span>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Biaya Moulding (Cetakan), Inti & Pola</h2>
+                        </div>
+                        <span id="badge-sec3-status" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full font-medium">Aktif di Semua Mode</span>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <!-- In-House Sand Molding Inputs -->
+                        <div id="molding-sand-inputs" class="space-y-4 pb-3 border-b border-slate-100">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Sistem Pasir Cetak</label>
+                                    <select id="sandSystem" onchange="onSandSystemChange()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
+                                        <option value="GREENSAND">Greensand (Bentonit + Coal Dust)</option>
+                                        <option value="FURAN">Resin Furan / No-Bake</option>
+                                        <option value="CO2">Pasir CO2 / Waterglass</option>
+                                        <option value="SHELL">Shell Molding / Coated Sand</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1" title="Perbandingan berat pasir cetak terhadap berat logam tuang">Rasio Pasir : Logam Tuang</label>
+                                    <div class="flex items-center">
+                                        <input type="number" id="sandToMetalRatio" value="4.0" min="0.5" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-l-lg">
+                                        <span class="bg-slate-100 border border-l-0 border-slate-300 px-3 py-2 text-sm text-slate-600 rounded-r-lg font-medium">: 1</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Campuran Pasir (Rp/kg pasir)</label>
+                                    <input type="number" id="sandCostPerKg" value="420" min="0" step="10" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Berat Inti / Core (kg/pcs)</label>
+                                    <input type="number" id="coreWeight" value="3.5" min="0" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Pembuatan Inti (Rp/kg inti)</label>
+                                    <input type="number" id="coreCostPerKg" value="2500" min="0" step="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Cat Cetakan / Mold Coating (Rp/pcs)</label>
+                                    <input type="number" id="coatingCostPerPcs" value="3500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Moulding Work, Pattern Maintenance & Amortization (Active in both In-house & Subkon) -->
+                        <div class="bg-amber-50/50 p-3.5 rounded-xl border border-amber-200/80 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-box-open text-amber-600"></i> Biaya Moulding Box, Setting Cetakan & Pola (Pattern)
+                                </span>
+                                <span class="text-[11px] text-amber-700">Dihitung baik Cor Sendiri maupun Subkon</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Biaya jasa/upah moulding per pcs, sewa cetakan, atau biaya moulding tambahan di luar">Biaya Jasa / Operasional Moulding (Rp/pcs)</label>
+                                    <input type="number" id="mouldingFeePerPcs" value="8500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-amber-400 bg-white rounded-lg font-semibold text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Biaya dempul pola, modifikasi gating, wax, release agent, atau perbaikan pola">Perawatan / Setting / Modifikasi Pola (Rp/pcs)</label>
+                                    <input type="number" id="patternMaintPerPcs" value="2500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 bg-white rounded-lg">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Biaya Buat Pola / Mould Baru (Total Rp)</label>
+                                    <input type="number" id="patternTotalCost" value="2500000" min="0" step="100000" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 bg-white rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Metode Pembebanan Biaya Pola Baru</label>
+                                    <select id="patternAmortType" onchange="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
+                                        <option value="AMORTIZE">Amortisasi (Bagi rata ke Jumlah Order saat ini)</option>
+                                        <option value="SEPARATE">Tagih Terpisah / Pola Sudah Ada (Rp 0 di HPP)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Energi Peleburan, Alat Finishing (Gerinda/Cat), Machining & QC -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2.5">
+                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">4</span>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec4">Peleburan, Alat Finishing, Pengecatan & Machining</h2>
+                        </div>
+                        <span id="badge-sec4-status" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full hidden">Fokus In-House Finishing</span>
+                    </div>
+                    <div class="p-5 space-y-5">
+                        <!-- Melting Energy & Refractory (Hidden when Subkon Full/Toll) -->
+                        <div id="melting-energy-inputs" class="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-200">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Konsumsi Listrik Lebur (kWh/ton cair)</label>
+                                <input type="number" id="kwhPerTon" value="620" min="100" step="10" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Refraktori, Lining & Termokopel (Rp/kg cair)</label>
+                                <input type="number" id="refractoryPerKg" value="350" min="0" step="25" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Upah Tim Cetak & Lebur (Rp/kg cair)</label>
+                                <input type="number" id="laborMeltingPerKg" value="1200" min="0" step="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                            </div>
+                        </div>
+
+                        <!-- A. Tenaga Kerja & Jasa Finishing Dasar -->
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-purple-800 mb-2.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-gear text-purple-600"></i> A. Upah Kerja Finishing, Bubut (Machining) & QC
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1" title="Upah tukang gerinda, potong saluran, dan shotblasting per kg bersih">Upah Gerinda & Fettling (Rp/kg)</label>
+                                    <input type="number" id="fettlingPerKg" value="800" min="0" step="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Machining / Bubut (Rp/pcs)</label>
+                                    <input type="number" id="machiningPerPcs" value="45000" min="0" step="5000" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-emerald-400 bg-emerald-50/20 rounded-lg font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Heat Treatment (Rp/kg bersih)</label>
+                                    <input type="number" id="heatTreatPerKg" value="0" min="0" step="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1" title="Inspeksi dimensi, uji kekerasan, spektro">Biaya QC & Pengujian (Rp/pcs)</label>
+                                    <input type="number" id="qcPaintingPerPcs" value="3500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- B. Alat & Consumables Finishing (Batu Gerinda, Dempul, Pahat, Cat & Thinner) -->
+                        <div class="bg-purple-50/60 p-4 rounded-xl border border-purple-200 space-y-3">
+                            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-purple-200/80 pb-2">
+                                <span class="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-toolbox text-purple-600"></i> B. Belanja Alat Bantu Finishing, Batu Gerinda, Dempul & Bahan Cat
+                                </span>
+                                <span class="text-[11px] font-bold text-purple-800 bg-purple-100 px-2.5 py-0.5 rounded-full" id="subtotal-consumables-badge">Subtotal Alat & Cat: Rp 18.500 /pcs</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Batu gerinda potong (cutting wheel), batu gerinda poles, flap disc, amplas, mata bor/kikir">Batu Gerinda & Amplas (Rp/pcs)</label>
+                                    <input type="number" id="grindingDiscPerPcs" value="4500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-300 bg-white rounded-lg font-semibold text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Insert carbide bubut, mata tap/senai, cairan coolant, oli mesin, majun, sarung tangan">Pahat Bubut, Coolant & APD (Rp/pcs)</label>
+                                    <input type="number" id="toolingConsumablePerPcs" value="5000" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-300 bg-white rounded-lg font-semibold text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Dempul besi/epoxy (putty), kawat las koreksi, sandblasting grit/steel shot">Dempul Cor & Kawat Las (Rp/pcs)</label>
+                                    <input type="number" id="puttyWeldingPerPcs" value="2500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-300 bg-white rounded-lg font-semibold text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Cat primer epoxy/zinc chromate, cat warna akhir (top coat), thinner, kuas/semprot">Bahan Cat Primer, Topcoat & Thinner (Rp/pcs)</label>
+                                    <input type="number" id="paintMaterialPerPcs" value="6500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-300 bg-white rounded-lg font-semibold text-slate-800">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Risiko Reject, Overhead, Margin & Pajak -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2.5">
+                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">5</span>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Risiko Gagal Cor (Scrap Rate), Overhead & Margin</h2>
+                        </div>
+                    </div>
+                    <div class="p-5 grid grid-cols-2 sm:grid-cols-5 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1" title="Cadangan risiko cacat keropos/misrun">Cadangan Reject (%)</label>
+                            <input type="number" id="rejectRatePct" value="5" min="0" max="50" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-rose-300 bg-rose-50/30 rounded-lg font-semibold text-rose-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1" title="Penyusutan pabrik, manajemen, admin">Overhead Pabrik (%)</label>
+                            <input type="number" id="overheadPct" value="10" min="0" max="100" step="1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Packing & Kirim (Rp/kg)</label>
+                            <input type="number" id="logisticsPerKg" value="400" min="0" step="50" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Target Margin Profit (%)</label>
+                            <input type="number" id="profitMarginPct" value="20" min="1" max="80" step="1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-emerald-400 bg-emerald-50/40 rounded-lg font-bold text-emerald-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">PPN (%)</label>
+                            <select id="taxPct" onchange="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white font-semibold">
+                                <option value="11">11% (PKP)</option>
+                                <option value="12">12% (PKP)</option>
+                                <option value="0">0% (Non-PKP)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Real-Time Summary & Cost Breakdown (5 Cols) -->
+            <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-28">
+                
+                <!-- Executive Pricing Card -->
+                <div class="bg-slate-900 text-white rounded-2xl shadow-xl overflow-hidden border border-slate-800">
+                    <div class="p-5 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="text-xs uppercase tracking-widest text-orange-400 font-bold">Rekomendasi Harga Jual (Excl. PPN)</span>
+                                <h3 class="text-3xl font-extrabold tracking-tight mt-0.5" id="res-selling-pcs">Rp 712.500 <span class="text-sm font-normal text-slate-400">/ pcs</span></h3>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-400 block">Harga Jual per Kg Bersih</span>
+                                <span class="text-lg font-bold text-emerald-400 font-mono" id="res-selling-kg">Rp 28.500 /kg</span>
+                            </div>
+                        </div>
+
+                        <!-- Key KPI Grid -->
+                        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-800 text-center">
+                            <div class="bg-slate-800/70 p-2.5 rounded-xl">
+                                <span class="text-[11px] text-slate-400 block">Total HPP Produksi</span>
+                                <span class="text-sm font-bold text-white font-mono" id="res-hpp-pcs">Rp 560.000</span>
+                                <span class="text-[10px] text-slate-400 block font-mono" id="res-hpp-kg">(Rp 22.400/kg)</span>
+                            </div>
+                            <div class="bg-slate-800/70 p-2.5 rounded-xl">
+                                <span class="text-[11px] text-slate-400 block">Laba Bersih / Pcs</span>
+                                <span class="text-sm font-bold text-emerald-400 font-mono" id="res-profit-pcs">Rp 142.500</span>
+                                <span class="text-[10px] text-emerald-500/80 block font-mono" id="res-profit-kg">(Rp 5.700/kg)</span>
+                            </div>
+                            <div class="bg-slate-800/70 p-2.5 rounded-xl">
+                                <span class="text-[11px] text-slate-400 block">Harga + PPN</span>
+                                <span class="text-sm font-bold text-amber-400 font-mono" id="res-selling-tax">Rp 790.875</span>
+                                <span class="text-[10px] text-slate-400 block">Final Invoice/pcs</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Batch Total Strip -->
+                    <div class="bg-orange-600 px-5 py-3 flex justify-between items-center text-xs font-semibold">
+                        <span>TOTAL NILAI PROYEK (<span id="res-batch-qty">100</span> Pcs - Incl. PPN):</span>
+                        <span class="text-base font-extrabold font-mono" id="res-batch-total">Rp 79.087.500</span>
+                    </div>
+                </div>
+
+                <!-- Make vs Buy (Cor Sendiri vs Subkon) Quick Comparison Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                    <div class="flex justify-between items-center mb-2.5">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-scale-balanced text-orange-600"></i> Simulasi Perbandingan: Cor Sendiri vs Subkon
+                        </span>
+                        <span id="make-buy-badge" class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Hemat Cor Sendiri</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                            <span class="text-[11px] text-slate-500 block">HPP jika Cor Sendiri (In-House)</span>
+                            <span class="font-bold text-slate-800 font-mono text-sm" id="cmp-inhouse-pcs">Rp 607.528 /pcs</span>
+                            <span class="text-[10px] text-slate-500 block font-mono" id="cmp-inhouse-kg">(Rp 24.301 /kg)</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-blue-50/60 border border-blue-200">
+                            <span class="text-[11px] text-blue-700 block">HPP jika Subkon + Finishing Kita</span>
+                            <span class="font-bold text-blue-900 font-mono text-sm" id="cmp-subkon-pcs">Rp 592.300 /pcs</span>
+                            <span class="text-[10px] text-blue-600 block font-mono" id="cmp-subkon-kg">(Rp 23.692 /kg)</span>
+                        </div>
+                    </div>
+                    <p id="cmp-diff-note" class="text-[11px] text-slate-500 mt-2 text-center font-medium"></p>
+                </div>
+
+                <!-- Detailed Cost Structure Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-orange-600"></i> Rincian Struktur Biaya (Breakdown HPP)
+                        </h3>
+                        <span class="text-[11px] text-slate-500 font-medium">Basis: Berat Bersih (<span id="lbl-basis-net">25</span> kg)</span>
+                    </div>
+
+                    <div class="p-5 space-y-4">
+                        <!-- Visual Stacked Progress Bar -->
+                        <div class="w-full h-3.5 rounded-full overflow-hidden flex bg-slate-100 p-0.5 gap-0.5" id="cost-distribution-bar">
+                            <div id="bar-mat" class="bg-orange-600 h-full rounded-l-full" style="width: 45%" title="Bahan Baku"></div>
+                            <div id="bar-mold" class="bg-amber-500 h-full" style="width: 15%" title="Cetakan & Pola"></div>
+                            <div id="bar-melt" class="bg-blue-600 h-full" style="width: 18%" title="Peleburan"></div>
+                            <div id="bar-fin" class="bg-purple-600 h-full" style="width: 12%" title="Finishing & Machining"></div>
+                            <div id="bar-ovh" class="bg-rose-600 h-full rounded-r-full" style="width: 10%" title="Reject & Overhead"></div>
+                        </div>
+                        <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 justify-center">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-600"></span> Logam</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cetakan</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Lebur</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Finishing/Bubut</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> Reject & Ovh</span>
+                        </div>
+
+                        <!-- Breakdown List -->
+                        <div class="divide-y divide-slate-100 text-xs">
+                            <div class="py-2 flex justify-between items-center">
+                                <div>
+                                    <span class="font-semibold text-slate-700 block" id="title-row-a1">A1. Logam Cair Tuang (Gross + Loss)</span>
+                                    <span class="text-[11px] text-slate-400" id="desc-gross-metal">36.75 kg lebur × Rp 8.675</span>
+                                </div>
+                                <span class="font-mono font-semibold text-slate-800" id="val-gross-metal">Rp 318.806</span>
+                            </div>
+
+                            <div id="row-scrap-credit" class="py-2 flex justify-between items-center text-emerald-700 bg-emerald-50/50 px-2 rounded-lg">
+                                <div>
+                                    <span class="font-semibold block">A2. Kredit Balikan Saluran & Riser (-)</span>
+                                    <span class="text-[11px] text-emerald-600" id="desc-scrap-credit">9.20 kg kembali × Rp 6.500</span>
+                                </div>
+                                <span class="font-mono font-bold" id="val-scrap-credit">- Rp 59.800</span>
+                            </div>
+
+                            <div class="py-2 flex justify-between items-center">
+                                <div>
+                                    <span class="font-semibold text-slate-700 block" id="title-row-b">B. Biaya Moulding, Pasir, Inti & Pola</span>
+                                    <span class="text-[11px] text-slate-400" id="desc-molding">Pasir + Jasa Moulding + Pola</span>
+                                </div>
+                                <span class="font-mono font-semibold text-slate-800" id="val-molding">Rp 107.050</span>
+                            </div>
+
+                            <div class="py-2 flex justify-between items-center">
+                                <div>
+                                    <span class="font-semibold text-slate-700 block" id="title-row-c">C. Energi Peleburan, Refraktori & Tenaga</span>
+                                    <span class="text-[11px] text-slate-400" id="desc-melting">Listrik + Lining + Upah Lebur</span>
+                                </div>
+                                <span class="font-mono font-semibold text-slate-800" id="val-melting">Rp 89.250</span>
+                            </div>
+
+                            <div class="py-2 flex justify-between items-center bg-purple-50/40 px-2 rounded-lg">
+                                <div>
+                                    <span class="font-semibold text-slate-800 block">D. Finishing, Alat Gerinda, Cat, Bubut & QC</span>
+                                    <span class="text-[11px] text-slate-500" id="desc-finishing">Upah + Gerinda/Pahat + Cat + Bubut</span>
+                                </div>
+                                <span class="font-mono font-bold text-purple-900" id="val-finishing">Rp 87.000</span>
+                            </div>
+
+                            <div class="py-2 flex justify-between items-center">
+                                <div>
+                                    <span class="font-semibold text-slate-700 block">E. Cadangan Gagal Cor (Scrap) & Overhead</span>
+                                    <span class="text-[11px] text-slate-400" id="desc-risk-ovh">Reject 5% + Overhead Pabrik 10%</span>
+                                </div>
+                                <span class="font-mono font-semibold text-rose-600" id="val-risk-ovh">Rp 83.222</span>
+                            </div>
+
+                            <div class="py-2 flex justify-between items-center">
+                                <div>
+                                    <span class="font-semibold text-slate-700 block">F. Biaya Kemasan & Logistik Pengiriman</span>
+                                    <span class="text-[11px] text-slate-400">Packing palet & ongkos kirim</span>
+                                </div>
+                                <span class="font-mono font-semibold text-slate-800" id="val-logistics">Rp 10.000</span>
+                            </div>
+                        </div>
+
+                        <!-- Total Tonnage Box -->
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Total Kebutuhan Logam Cair (1 Batch):</span>
+                                <span class="font-bold text-slate-800" id="batch-liquid-req">3.675 kg (3,68 Ton)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Total Tonase Produk Jadi Dikirim:</span>
+                                <span class="font-bold text-emerald-700" id="batch-net-deliv">2.500 kg (2,50 Ton)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 2: MASTER DATABASE -->
+        <div id="view-master" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-wrap justify-between items-center gap-4 mb-6 pb-4 border-b border-slate-200">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Database Master Harga Bahan Baku & Tarif Energi</h2>
+                        <p class="text-xs text-slate-500">Ubah harga acuan di bawah ini bila harga pasar scrap/logam atau tarif listrik PLN mengalami perubahan.</p>
+                    </div>
+                    <button onclick="applyMasterChanges()" class="bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-rotate"></i> Terapkan & Hitung Ulang HPP
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Material Master -->
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2">
+                            <i class="fa-solid fa-cubes"></i> Harga Dasar Bahan Baku Logam (Rp / Kg)
+                        </h3>
+                        <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Pig Iron / Ingot Utama (Rp/kg)</label>
+                                <input type="number" id="mst-pig" value="9500" step="100" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Scrap Baja / Besi Beli (Rp/kg)</label>
+                                <input type="number" id="mst-scrap" value="7200" step="100" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Nilai Scrap Balikan Internal / Return (Rp/kg)</label>
+                                <input type="number" id="mst-return" value="6500" step="100" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Ferroalloys Rata-rata - FeSi/FeMn (Rp/kg)</label>
+                                <input type="number" id="mst-alloy" value="28500" step="500" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Ingot Aluminium ADC12 (Rp/kg)</label>
+                                <input type="number" id="mst-al-ingot" value="38000" step="500" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Ingot Bronze / Tembaga Paduan (Rp/kg)</label>
+                                <input type="number" id="mst-bronze" value="115000" step="1000" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Utility & Consumable Master -->
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-blue-600 flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Tarif Energi Listrik & Pasir Cetak
+                        </h3>
+                        <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Tarif Listrik Industri PLN Rata-rata (Rp/kWh)</label>
+                                <input type="number" id="mst-kwh-rate" value="1450" step="50" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Biaya Pasir Greensand Recycle (Rp/kg pasir)</label>
+                                <input type="number" id="mst-sand-green" value="420" step="20" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Biaya Pasir Resin Furan / No-Bake (Rp/kg pasir)</label>
+                                <input type="number" id="mst-sand-furan" value="1850" step="50" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Biaya Pasir CO2 / Waterglass (Rp/kg pasir)</label>
+                                <input type="number" id="mst-sand-co2" value="1150" step="50" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-semibold text-slate-700">Nama Perusahaan Pengecoran Anda</label>
+                                <input type="text" id="mst-company" value="PT. Nusantara Jaya Foundry" class="w-52 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-semibold">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: SAVED HISTORY -->
+        <div id="view-history" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800">Daftar Riwayat Kalkulasi HPP & Penawaran</h2>
+                        <p class="text-xs text-slate-500">Bandingkan simulasi biaya antar komponen atau muat ulang data ke kalkulator.</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase">
+                                <th class="py-3 px-4">Tanggal</th>
+                                <th class="py-3 px-4">Komponen & Klien</th>
+                                <th class="py-3 px-4">Material</th>
+                                <th class="py-3 px-4 text-center">Net / Gross (Yield)</th>
+                                <th class="py-3 px-4 text-right">HPP / Kg</th>
+                                <th class="py-3 px-4 text-right">Harga Jual / Kg</th>
+                                <th class="py-3 px-4 text-right">Harga Jual / Pcs</th>
+                                <th class="py-3 px-4 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-200">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- QUOTATION MODAL -->
+    <div id="quotation-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden my-8">
+            <!-- Modal Action Header -->
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center no-print">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-file-contract text-orange-400"></i> Pratinjau Surat Penawaran Harga (Quotation)
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
+                    </button>
+                    <button onclick="closeQuotationModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Area -->
+            <div class="p-8 space-y-6 text-slate-800" id="printable-area">
+                <div class="flex justify-between items-start border-b-2 border-slate-800 pb-5">
+                    <div>
+                        <h2 class="text-xl font-extrabold uppercase tracking-tight text-slate-900" id="quo-company">PT. NUSANTARA JAYA FOUNDRY</h2>
+                        <p class="text-xs text-slate-500 mt-1">Manufacturing of Ferro & Non-Ferro Metal Casting, Machining & Engineering</p>
+                        <p class="text-xs text-slate-500">Kawasan Industri Batur / Ceper, Klaten, Jawa Tengah - Indonesia</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-lg font-extrabold text-orange-600 uppercase">SURAT PENAWARAN HARGA</span>
+                        <p class="text-xs text-slate-500 mt-1">No: <span id="quo-number" class="font-mono font-semibold text-slate-800">QUO/FNDRY/2026/1042</span></p>
+                        <p class="text-xs text-slate-500">Tanggal: <span id="quo-date" class="font-semibold text-slate-800">14 Oktober 2026</span></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <span class="text-slate-400 uppercase font-bold block text-[10px]">Kepada Yth:</span>
+                        <p class="font-bold text-sm text-slate-800 mt-0.5" id="quo-client">PT. Maju Teknik Mandiri</p>
+                        <p class="text-slate-600 mt-0.5">Up. Divisi Purchasing / Procurement</p>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <span class="text-slate-400 uppercase font-bold block text-[10px]">Spesifikasi Teknis:</span>
+                        <p class="font-semibold text-slate-800 mt-0.5">Material: <span id="quo-grade">FC 250 (Cast Iron)</span></p>
+                        <p class="text-slate-600 mt-0.5">Estimasi Berat Bersih: <span id="quo-weight">25.0</span> kg / pcs</p>
+                    </div>
+                </div>
+
+                <!-- Quotation Table -->
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-800 text-white uppercase">
+                            <th class="py-2.5 px-3 rounded-tl-lg">Deskripsi Komponen</th>
+                            <th class="py-2.5 px-3 text-center">Qty</th>
+                            <th class="py-2.5 px-3 text-right">Harga / Kg</th>
+                            <th class="py-2.5 px-3 text-right">Harga Satuan (Pcs)</th>
+                            <th class="py-2.5 px-3 text-right rounded-tr-lg">Total Harga</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 border-b border-slate-300">
+                        <tr>
+                            <td class="py-3.5 px-3">
+                                <p class="font-bold text-slate-800 text-sm" id="quo-part">Pulley V-Belt SPB 300 x 4 Jalur</p>
+                                <p class="text-slate-500 text-[11px] mt-0.5" id="quo-condition">Kondisi: Cor + Fettling Shotblast + Machining Siap Pakai</p>
+                            </td>
+                            <td class="py-3.5 px-3 text-center font-semibold" id="quo-qty">100 Pcs</td>
+                            <td class="py-3.5 px-3 text-right font-mono" id="quo-price-kg">Rp 28.500</td>
+                            <td class="py-3.5 px-3 text-right font-mono font-semibold" id="quo-price-pcs">Rp 712.500</td>
+                            <td class="py-3.5 px-3 text-right font-mono font-bold text-slate-900" id="quo-subtotal">Rp 71.250.000</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="pt-3"></td>
+                            <td class="pt-3 px-3 text-right text-slate-500 font-medium">Subtotal:</td>
+                            <td class="pt-3 px-3 text-right font-mono font-semibold" id="quo-foot-sub">Rp 71.250.000</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"></td>
+                            <td class="py-1 px-3 text-right text-slate-500 font-medium">PPN (<span id="quo-tax-pct">11</span>%):</td>
+                            <td class="py-1 px-3 text-right font-mono font-semibold" id="quo-foot-tax">Rp 7.837.500</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"></td>
+                            <td class="py-2 px-3 text-right font-bold text-slate-900 text-sm border-t border-slate-300">Grand Total:</td>
+                            <td class="py-2 px-3 text-right font-mono font-extrabold text-orange-600 text-sm border-t border-slate-300" id="quo-foot-grand">Rp 79.087.500</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="grid grid-cols-2 gap-6 pt-4 text-xs text-slate-600">
+                    <div class="space-y-1">
+                        <p class="font-bold text-slate-800 uppercase text-[11px]">Syarat & Ketentuan:</p>
+                        <p>1. Toleransi berat coran ± 5% sesuai standar industri pengecoran.</p>
+                        <p>2. Pembayaran: DP 40% saat PO turun, 60% sebelum pengiriman.</p>
+                        <p>3. Masa berlaku penawaran: 14 hari kalender sejak tanggal terbit.</p>
+                    </div>
+                    <div class="text-right flex flex-col justify-between items-end">
+                        <p class="font-semibold text-slate-800">Hormat Kami,</p>
+                        <div class="mt-12 border-t border-slate-400 pt-1 w-44 text-center">
+                            <p class="font-bold text-slate-800">Divisi Komersial & Estimasi</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current Production Mode ('INHOUSE' | 'SUB_FULL' | 'SUB_TOLL')
+        let currentProdMode = 'INHOUSE';
+
+        // Master State & History
+        let calculationHistory = [
+            {
+                date: '14 Okt 2026',
+                partName: 'Pulley V-Belt SPB 300 x 4 Jalur',
+                clientName: 'PT. Maju Teknik Mandiri',
+                grade: 'FC250 (In-House)',
+                netWeight: 25,
+                grossWeight: 35,
+                yieldPct: '71.4%',
+                hppKg: 24301,
+                sellKg: 30376,
+                sellPcs: 759405
+            },
+            {
+                date: '14 Okt 2026',
+                partName: 'Pulley V-Belt SPB 300 (Subkon Cor Luar)',
+                clientName: 'PT. Maju Teknik Mandiri',
+                grade: 'FC250 (Subkon)',
+                netWeight: 25,
+                grossWeight: 25,
+                yieldPct: 'Subkon',
+                hppKg: 22361,
+                sellKg: 27951,
+                sellPcs: 698780
+            }
+        ];
+
+        function setProductionMode(mode) {
+            currentProdMode = mode;
+
+            // Reset mode buttons style
+            const btnInhouse = document.getElementById('btn-mode-inhouse');
+            const btnSubFull = document.getElementById('btn-mode-subfull');
+            const btnSubToll = document.getElementById('btn-mode-subtoll');
+
+            [btnInhouse, btnSubFull, btnSubToll].forEach(b => {
+                b.className = 'text-left p-3 rounded-xl border border-slate-200 hover:border-orange-400 bg-white transition flex flex-col justify-between';
+            });
+
+            const subPanel = document.getElementById('subkon-config-panel');
+            const wrapFull = document.getElementById('wrap-sub-full-rate');
+            const wrapToll = document.getElementById('wrap-sub-toll-rate');
+            const secRaw = document.getElementById('section-raw-material');
+            const moldingSandInputs = document.getElementById('molding-sand-inputs');
+            const meltingEnergyInputs = document.getElementById('melting-energy-inputs');
+            const pill = document.getElementById('mode-active-pill');
+            const badgeSec4 = document.getElementById('badge-sec4-status');
+
+            if (mode === 'INHOUSE') {
+                btnInhouse.className = 'text-left p-3 rounded-xl border-2 border-orange-600 bg-orange-50/60 transition flex flex-col justify-between';
+                pill.innerText = 'Cor Sendiri (In-House)';
+                subPanel.classList.add('hidden');
+                secRaw.classList.remove('hidden');
+                moldingSandInputs.classList.remove('hidden');
+                meltingEnergyInputs.classList.remove('hidden');
+                badgeSec4.classList.add('hidden');
+                document.getElementById('title-sec4').innerText = 'Peleburan, Finishing, Machining & QC';
+            } else if (mode === 'SUB_FULL') {
+                btnSubFull.className = 'text-left p-3 rounded-xl border-2 border-blue-600 bg-blue-50/60 transition flex flex-col justify-between';
+                pill.innerText = 'Subkon Cor Luar + Finishing Internal';
+                subPanel.classList.remove('hidden');
+                wrapFull.classList.remove('hidden');
+                wrapToll.classList.add('hidden');
+                document.getElementById('subkon-type-desc').innerText = 'Skema: Beli Coran Mentah dari Vendor, Finishing & Bubut di Tempat Kita';
+
+                // Hide raw material, sand & melting energy inputs because vendor handles them
+                secRaw.classList.add('hidden');
+                moldingSandInputs.classList.add('hidden');
+                meltingEnergyInputs.classList.add('hidden');
+                badgeSec4.classList.remove('hidden');
+                document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
+            } else if (mode === 'SUB_TOLL') {
+                btnSubToll.className = 'text-left p-3 rounded-xl border-2 border-purple-600 bg-purple-50/60 transition flex flex-col justify-between';
+                pill.innerText = 'Maklon Titip Lebur + Finishing Internal';
+                subPanel.classList.remove('hidden');
+                wrapFull.classList.add('hidden');
+                wrapToll.classList.remove('hidden');
+                document.getElementById('subkon-type-desc').innerText = 'Skema: Bahan Baku Logam dari Kita, Bayar Jasa Cetak & Lebur ke Vendor';
+
+                // Keep Raw Material visible, hide sand & melting energy
+                secRaw.classList.remove('hidden');
+                moldingSandInputs.classList.add('hidden');
+                meltingEnergyInputs.classList.add('hidden');
+                badgeSec4.classList.remove('hidden');
+                document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
+            }
+
+            calculateAll();
+        }
+
+        function onSubConditionChange() {
+            const cond = document.getElementById('subCondition').value;
+            if (cond === 'AS_CAST') {
+                document.getElementById('fettlingPerKg').value = 600; // Hanya gerinda halus/rapikan
+            } else if (cond === 'FETTLED') {
+                document.getElementById('fettlingPerKg').value = 150; // Sudah bersih dari subkon, hanya cek/touchup
+            } else if (cond === 'RAW_GATING') {
+                document.getElementById('fettlingPerKg').value = 1200; // Potong saluran & gerinda penuh di tempat kita
+            }
+            calculateAll();
+        }
+
+        // Format Currency Rupiah
+        function formatRp(num) {
+            return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+        }
+
+        // Show Toast Notification
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2800);
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            ['calculator', 'master', 'history'].forEach(t => {
+                document.getElementById('view-' + t).classList.add('hidden');
+                document.getElementById('tab-btn-' + t).classList.remove('tab-active');
+                document.getElementById('tab-btn-' + t).classList.add('text-slate-300');
+            });
+            document.getElementById('view-' + tabName).classList.remove('hidden');
+            document.getElementById('tab-btn-' + tabName).classList.add('tab-active');
+            document.getElementById('tab-btn-' + tabName).classList.remove('text-slate-300');
+            if (tabName === 'history') renderHistoryTable();
+        }
+
+        // Sync Yield Indicator when Net or Gross Weight changes
+        function syncYieldFromWeights() {
+            let net = parseFloat(document.getElementById('netWeight').value) || 0.1;
+            let gross = parseFloat(document.getElementById('grossWeight').value) || 0.1;
+            if (gross < net) {
+                gross = net;
+            }
+            const yieldPct = (net / gross) * 100;
+            const gatingWeight = Math.max(0, gross - net);
+
+            document.getElementById('lbl-net-w').innerText = net.toFixed(1) + ' kg';
+            document.getElementById('lbl-gating-w').innerText = gatingWeight.toFixed(1) + ' kg';
+            document.getElementById('yield-bar-fill').style.width = Math.min(100, yieldPct).toFixed(1) + '%';
+
+            const badge = document.getElementById('yield-status-badge');
+            if (yieldPct >= 68) {
+                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700';
+                badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Efisien)`;
+            } else if (yieldPct >= 55) {
+                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700';
+                badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Moderat)`;
+            } else {
+                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700';
+                badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Boros Riser)`;
+            }
+
+            calculateAll();
+        }
+
+        // Handle Alloy Grade Change
+        function onGradeChange() {
+            const grade = document.getElementById('alloyGrade').value;
+            if (grade === 'FC250') {
+                document.getElementById('mixPig').value = 25;
+                document.getElementById('mixScrap').value = 45;
+                document.getElementById('mixReturn').value = 27;
+                document.getElementById('mixAlloy').value = 3;
+                document.getElementById('inoculantCostPerKg').value = 450;
+                document.getElementById('kwhPerTon').value = 620;
+            } else if (grade === 'FCD500') {
+                document.getElementById('mixPig').value = 40;
+                document.getElementById('mixScrap').value = 30;
+                document.getElementById('mixReturn').value = 25;
+                document.getElementById('mixAlloy').value = 5;
+                document.getElementById('inoculantCostPerKg').value = 1850; // Nodulizer Mg + Inoculant
+                document.getElementById('kwhPerTon').value = 680;
+            } else if (grade === 'SS400') {
+                document.getElementById('mixPig').value = 10;
+                document.getElementById('mixScrap').value = 60;
+                document.getElementById('mixReturn').value = 25;
+                document.getElementById('mixAlloy').value = 5;
+                document.getElementById('inoculantCostPerKg').value = 950;
+                document.getElementById('kwhPerTon').value = 750;
+            } else if (grade === 'AL_ADC12') {
+                document.getElementById('mixPig').value = 70;
+                document.getElementById('mixScrap').value = 10;
+                document.getElementById('mixReturn').value = 20;
+                document.getElementById('mixAlloy').value = 0;
+                document.getElementById('inoculantCostPerKg').value = 600; // Degasser & Flux
+                document.getElementById('kwhPerTon').value = 480;
+            } else if (grade === 'BRONZE') {
+                document.getElementById('mixPig').value = 80;
+                document.getElementById('mixScrap').value = 0;
+                document.getElementById('mixReturn').value = 20;
+                document.getElementById('mixAlloy').value = 0;
+                document.getElementById('inoculantCostPerKg').value = 800;
+                document.getElementById('kwhPerTon').value = 520;
+            }
+            calculateAll();
+        }
+
+        // Handle Sand System Selection
+        function onSandSystemChange() {
+            const sys = document.getElementById('sandSystem').value;
+            if (sys === 'GREENSAND') {
+                document.getElementById('sandCostPerKg').value = document.getElementById('mst-sand-green').value;
+            } else if (sys === 'FURAN') {
+                document.getElementById('sandCostPerKg').value = document.getElementById('mst-sand-furan').value;
+            } else if (sys === 'CO2') {
+                document.getElementById('sandCostPerKg').value = document.getElementById('mst-sand-co2').value;
+            } else {
+                document.getElementById('sandCostPerKg').value = 2400;
+            }
+            calculateAll();
+        }
+
+        // Apply Master Database Updates
+        function applyMasterChanges() {
+            onSandSystemChange();
+            calculateAll();
+            switchTab('calculator');
+            showToast('Harga Master berhasil diterapkan ke kalkulator!');
+        }
+
+        // Main Calculation Function
+        function calculateAll() {
+            // 1. Read Weights & Order Qty
+            const qty = Math.max(1, parseFloat(document.getElementById('orderQty').value) || 1);
+            const netW = Math.max(0.1, parseFloat(document.getElementById('netWeight').value) || 1);
+            const grossW = Math.max(netW, parseFloat(document.getElementById('grossWeight').value) || netW);
+            const gatingW = Math.max(0, grossW - netW);
+
+            // 2. Read Master Prices based on selected grade
+            const grade = document.getElementById('alloyGrade').value;
+            let pricePig = parseFloat(document.getElementById('mst-pig').value) || 9500;
+            let priceScrap = parseFloat(document.getElementById('mst-scrap').value) || 7200;
+            let priceReturn = parseFloat(document.getElementById('mst-return').value) || 6500;
+            let priceAlloy = parseFloat(document.getElementById('mst-alloy').value) || 28500;
+
+            if (grade === 'AL_ADC12') {
+                pricePig = parseFloat(document.getElementById('mst-al-ingot').value) || 38000;
+                priceScrap = pricePig * 0.78;
+                priceReturn = pricePig * 0.75;
+            } else if (grade === 'BRONZE') {
+                pricePig = parseFloat(document.getElementById('mst-bronze').value) || 115000;
+                priceScrap = pricePig * 0.82;
+                priceReturn = pricePig * 0.80;
+            }
+
+            document.getElementById('disp-price-pig').innerText = formatRp(pricePig);
+            document.getElementById('disp-price-scrap').innerText = formatRp(priceScrap);
+            document.getElementById('disp-price-return').innerText = formatRp(priceReturn);
+            document.getElementById('disp-price-alloy').innerText = formatRp(priceAlloy);
+
+            // 3. Charge Mix Calculation
+            const mixPig = parseFloat(document.getElementById('mixPig').value) || 0;
+            const mixScrap = parseFloat(document.getElementById('mixScrap').value) || 0;
+            const mixReturn = parseFloat(document.getElementById('mixReturn').value) || 0;
+            const mixAlloy = parseFloat(document.getElementById('mixAlloy').value) || 0;
+            const totalMixPct = mixPig + mixScrap + mixReturn + mixAlloy;
+
+            const cPig = (mixPig / 100) * pricePig;
+            const cScrap = (mixScrap / 100) * priceScrap;
+            const cReturn = (mixReturn / 100) * priceReturn;
+            const cAlloy = (mixAlloy / 100) * priceAlloy;
+            const baseChargePricePerKg = cPig + cScrap + cReturn + cAlloy;
+
+            document.getElementById('contrib-pig').innerText = formatRp(cPig);
+            document.getElementById('contrib-scrap').innerText = formatRp(cScrap);
+            document.getElementById('contrib-return').innerText = formatRp(cReturn);
+            document.getElementById('contrib-alloy').innerText = formatRp(cAlloy);
+
+            const pctEl = document.getElementById('total-mix-pct');
+            pctEl.innerText = totalMixPct.toFixed(1) + '%';
+            pctEl.className = Math.abs(totalMixPct - 100) > 0.1 ? 'py-2.5 text-center text-rose-600 font-extrabold' : 'py-2.5 text-center text-emerald-700 font-bold';
+            document.getElementById('base-liquid-price').innerText = formatRp(baseChargePricePerKg) + ' /kg';
+
+            // 4. Liquid Metal, Melting Loss & Scrap Return Credit
+            const meltingLossPct = parseFloat(document.getElementById('meltingLossPct').value) || 0;
+            const inoculantCostPerKg = parseFloat(document.getElementById('inoculantCostPerKg').value) || 0;
+            const scrapRecoveryPct = parseFloat(document.getElementById('scrapRecoveryPct').value) || 0;
+
+            const requiredMeltWeight = grossW * (1 + (meltingLossPct / 100));
+            const effectiveLiquidPrice = baseChargePricePerKg + inoculantCostPerKg;
+            const grossMetalCost = requiredMeltWeight * effectiveLiquidPrice;
+
+            const recoveredScrapWeight = gatingW * (scrapRecoveryPct / 100);
+            const scrapCreditValue = recoveredScrapWeight * priceReturn;
+            const netMaterialCost = Math.max(0, grossMetalCost - scrapCreditValue);
+
+            // 5. Molding, Core, Moulding Box Fee & Pattern Cost
+            const sandRatio = parseFloat(document.getElementById('sandToMetalRatio').value) || 0;
+            const sandCostPerKg = parseFloat(document.getElementById('sandCostPerKg').value) || 0;
+            const coreW = parseFloat(document.getElementById('coreWeight').value) || 0;
+            const coreCostPerKg = parseFloat(document.getElementById('coreCostPerKg').value) || 0;
+            const coatingCost = parseFloat(document.getElementById('coatingCostPerPcs').value) || 0;
+            const mouldingFeePerPcs = parseFloat(document.getElementById('mouldingFeePerPcs').value) || 0;
+            const patternMaintPerPcs = parseFloat(document.getElementById('patternMaintPerPcs').value) || 0;
+            const patternTotal = parseFloat(document.getElementById('patternTotalCost').value) || 0;
+            const patternType = document.getElementById('patternAmortType').value;
+
+            const sandWeightPerPcs = grossW * sandRatio;
+            const moldingSandCost = sandWeightPerPcs * sandCostPerKg;
+            const coreTotalCost = coreW * coreCostPerKg;
+            const patternAmortCost = (patternType === 'AMORTIZE') ? (patternTotal / qty) : 0;
+
+            // Moulding & Pattern cost that applies even when outsourcing (if we manage/pay moulding & pattern)
+            const sharedMouldingPatternCost = mouldingFeePerPcs + patternMaintPerPcs + patternAmortCost;
+            // Full In-House Molding Cost includes sand, core, coating + shared moulding & pattern
+            const totalMoldingCost = moldingSandCost + coreTotalCost + coatingCost + sharedMouldingPatternCost;
+
+            // 6. Melting Energy, Refractory & Labor
+            const kwhPerTon = parseFloat(document.getElementById('kwhPerTon').value) || 0;
+            const kwhRate = parseFloat(document.getElementById('mst-kwh-rate').value) || 1450;
+            const refractoryPerKg = parseFloat(document.getElementById('refractoryPerKg').value) || 0;
+            const laborMeltingPerKg = parseFloat(document.getElementById('laborMeltingPerKg').value) || 0;
+
+            const electricityPerKgLiquid = (kwhPerTon / 1000) * kwhRate;
+            const totalMeltingCost = requiredMeltWeight * (electricityPerKgLiquid + refractoryPerKg + laborMeltingPerKg);
+
+            // 7. Finishing, Consumables (Grinding Disc, Tooling, Putty, Paint), Machining & QC
+            const fettlingPerKg = parseFloat(document.getElementById('fettlingPerKg').value) || 0;
+            const heatTreatPerKg = parseFloat(document.getElementById('heatTreatPerKg').value) || 0;
+            const machiningPerPcs = parseFloat(document.getElementById('machiningPerPcs').value) || 0;
+            const qcPaintingPerPcs = parseFloat(document.getElementById('qcPaintingPerPcs').value) || 0;
+
+            const grindingDiscPerPcs = parseFloat(document.getElementById('grindingDiscPerPcs').value) || 0;
+            const toolingConsumablePerPcs = parseFloat(document.getElementById('toolingConsumablePerPcs').value) || 0;
+            const puttyWeldingPerPcs = parseFloat(document.getElementById('puttyWeldingPerPcs').value) || 0;
+            const paintMaterialPerPcs = parseFloat(document.getElementById('paintMaterialPerPcs').value) || 0;
+
+            const totalConsumablesAndPaint = grindingDiscPerPcs + toolingConsumablePerPcs + puttyWeldingPerPcs + paintMaterialPerPcs;
+            document.getElementById('subtotal-consumables-badge').innerText = `Subtotal Alat & Cat: ${formatRp(totalConsumablesAndPaint)} /pcs`;
+
+            const totalFinishingCost = (netW * (fettlingPerKg + heatTreatPerKg)) + machiningPerPcs + qcPaintingPerPcs + totalConsumablesAndPaint;
+
+            // 8A. Calculate In-House HPP (Always computed for Make-vs-Buy comparison)
+            const inhouseDirectSubtotal = netMaterialCost + totalMoldingCost + totalMeltingCost + totalFinishingCost;
+            const rejectPct = Math.min(80, parseFloat(document.getElementById('rejectRatePct').value) || 0);
+            const overheadPct = parseFloat(document.getElementById('overheadPct').value) || 0;
+            const logisticsPerKg = parseFloat(document.getElementById('logisticsPerKg').value) || 0;
+            const logisticsCostPerPcs = netW * logisticsPerKg;
+
+            const inhouseAfterReject = inhouseDirectSubtotal / (1 - (rejectPct / 100));
+            const inhouseRejectAllowance = inhouseAfterReject - inhouseDirectSubtotal;
+            const inhouseOverheadCost = inhouseAfterReject * (overheadPct / 100);
+            const inhouseHppPerPcs = inhouseAfterReject + inhouseOverheadCost + logisticsCostPerPcs;
+            const inhouseHppPerKg = inhouseHppPerPcs / netW;
+
+            // 8B. Calculate Subcontract (Outsourced Casting + Moulding/Pattern + In-House Finishing)
+            const subPricingBasis = document.getElementById('subPricingBasis').value;
+            const subRawPrice = parseFloat(document.getElementById('subRawPrice').value) || 0;
+            const subTollFeePerKg = parseFloat(document.getElementById('subTollFeePerKg').value) || 0;
+            const subTransportPerKg = parseFloat(document.getElementById('subTransportPerKg').value) || 0;
+            const subHiddenDefectPct = Math.min(50, parseFloat(document.getElementById('subHiddenDefectPct').value) || 0);
+
+            const subVendorBaseCost = (subPricingBasis === 'PER_KG_NET') ? (netW * subRawPrice) : subRawPrice;
+            const subTransportCostPerPcs = netW * subTransportPerKg;
+
+            // Full Subkon Cost
+            const subFullDirect = subVendorBaseCost + subTransportCostPerPcs + sharedMouldingPatternCost + totalFinishingCost;
+            const subFullAfterDefect = subFullDirect / (1 - (subHiddenDefectPct / 100));
+            const subFullOverhead = subFullAfterDefect * (overheadPct / 100);
+            const subFullHppPerPcs = subFullAfterDefect + subFullOverhead + logisticsCostPerPcs;
+            const subFullHppPerKg = subFullHppPerPcs / netW;
+
+            // Toll Melting (Maklon) Cost: Raw Material from Us + Vendor Toll Fee + Moulding/Pattern + Our Finishing
+            const subTollServiceCost = netW * subTollFeePerKg;
+            const subTollDirect = netMaterialCost + subTollServiceCost + subTransportCostPerPcs + sharedMouldingPatternCost + totalFinishingCost;
+            const subTollAfterDefect = subTollDirect / (1 - (subHiddenDefectPct / 100));
+            const subTollOverhead = subTollAfterDefect * (overheadPct / 100);
+            const subTollHppPerPcs = subTollAfterDefect + subTollOverhead + logisticsCostPerPcs;
+
+            // Select Active HPP based on currentProdMode
+            let totalHppPerPcs = inhouseHppPerPcs;
+            let activeMatCostForBar = netMaterialCost;
+            let activeMoldCostForBar = totalMoldingCost;
+            let activeMeltCostForBar = totalMeltingCost;
+            let activeRiskOvhTotal = inhouseRejectAllowance + inhouseOverheadCost;
+
+            if (currentProdMode === 'SUB_FULL') {
+                totalHppPerPcs = subFullHppPerPcs;
+                activeMatCostForBar = subVendorBaseCost;
+                activeMoldCostForBar = sharedMouldingPatternCost;
+                activeMeltCostForBar = subTransportCostPerPcs;
+                activeRiskOvhTotal = (subFullAfterDefect - subFullDirect) + subFullOverhead;
+            } else if (currentProdMode === 'SUB_TOLL') {
+                totalHppPerPcs = subTollHppPerPcs;
+                activeMatCostForBar = netMaterialCost;
+                activeMoldCostForBar = sharedMouldingPatternCost;
+                activeMeltCostForBar = subTollServiceCost + subTransportCostPerPcs;
+                activeRiskOvhTotal = (subTollAfterDefect - subTollDirect) + subTollOverhead;
+            }
+
+            const totalHppPerKg = totalHppPerPcs / netW;
+
+            // Update Make vs Buy Comparison Card
+            document.getElementById('cmp-inhouse-pcs').innerText = formatRp(inhouseHppPerPcs) + ' /pcs';
+            document.getElementById('cmp-inhouse-kg').innerText = `(${formatRp(inhouseHppPerKg)} /kg)`;
+            document.getElementById('cmp-subkon-pcs').innerText = formatRp(subFullHppPerPcs) + ' /pcs';
+            document.getElementById('cmp-subkon-kg').innerText = `(${formatRp(subFullHppPerKg)} /kg)`;
+
+            const diffPcs = inhouseHppPerPcs - subFullHppPerPcs;
+            const badgeMakeBuy = document.getElementById('make-buy-badge');
+            const noteMakeBuy = document.getElementById('cmp-diff-note');
+            if (diffPcs > 0) {
+                badgeMakeBuy.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800';
+                badgeMakeBuy.innerText = 'Subkon Lebih Murah';
+                noteMakeBuy.innerHTML = `Outsourcing ke vendor menghemat <b>${formatRp(diffPcs)}/pcs</b> (${formatRp(diffPcs / netW)}/kg) dibanding cor sendiri.`;
+            } else {
+                badgeMakeBuy.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800';
+                badgeMakeBuy.innerText = 'Cor Sendiri Lebih Hemat';
+                noteMakeBuy.innerHTML = `Cor sendiri (In-House) menghemat <b>${formatRp(Math.abs(diffPcs))}/pcs</b> (${formatRp(Math.abs(diffPcs) / netW)}/kg) dibanding subkon.`;
+            }
+
+            // 9. Commercial Selling Price & Profit Margin
+            const marginPct = Math.min(90, parseFloat(document.getElementById('profitMarginPct').value) || 0);
+            const taxPct = parseFloat(document.getElementById('taxPct').value) || 0;
+
+            const sellingPricePerPcs = totalHppPerPcs / (1 - (marginPct / 100));
+            const sellingPricePerKg = sellingPricePerPcs / netW;
+            const profitPerPcs = sellingPricePerPcs - totalHppPerPcs;
+            const profitPerKg = profitPerPcs / netW;
+
+            const sellingWithTaxPerPcs = sellingPricePerPcs * (1 + (taxPct / 100));
+            const batchTotalWithTax = sellingWithTaxPerPcs * qty;
+
+            // 10. Update UI Display
+            document.getElementById('res-selling-pcs').innerHTML = `${formatRp(sellingPricePerPcs)} <span class="text-sm font-normal text-slate-400">/ pcs</span>`;
+            document.getElementById('res-selling-kg').innerText = `${formatRp(sellingPricePerKg)} /kg`;
+            document.getElementById('res-hpp-pcs').innerText = formatRp(totalHppPerPcs);
+            document.getElementById('res-hpp-kg').innerText = `(${formatRp(totalHppPerKg)}/kg)`;
+            document.getElementById('res-profit-pcs').innerText = formatRp(profitPerPcs);
+            document.getElementById('res-profit-kg').innerText = `(${formatRp(profitPerKg)}/kg)`;
+            document.getElementById('res-selling-tax').innerText = formatRp(sellingWithTaxPerPcs);
+            document.getElementById('res-batch-qty').innerText = qty.toLocaleString('id-ID');
+            document.getElementById('res-batch-total').innerText = formatRp(batchTotalWithTax);
+
+            // Update Breakdown Details Dynamically based on Mode
+            document.getElementById('lbl-basis-net').innerText = netW.toFixed(1);
+
+            if (currentProdMode === 'INHOUSE') {
+                document.getElementById('title-row-a1').innerText = 'A1. Logam Cair Tuang (Gross + Loss)';
+                document.getElementById('desc-gross-metal').innerText = `${requiredMeltWeight.toFixed(2)} kg lebur × ${formatRp(effectiveLiquidPrice)}`;
+                document.getElementById('val-gross-metal').innerText = formatRp(grossMetalCost);
+
+                document.getElementById('row-scrap-credit').classList.remove('hidden');
+                document.getElementById('desc-scrap-credit').innerText = `${recoveredScrapWeight.toFixed(2)} kg kembali × ${formatRp(priceReturn)}`;
+                document.getElementById('val-scrap-credit').innerText = '- ' + formatRp(scrapCreditValue);
+
+                document.getElementById('title-row-b').innerText = 'B. Biaya Moulding, Pasir, Inti & Pola';
+                document.getElementById('desc-molding').innerText = `Pasir ${sandWeightPerPcs.toFixed(0)} kg + Moulding ${formatRp(mouldingFeePerPcs)} + Pola`;
+                document.getElementById('val-molding').innerText = formatRp(totalMoldingCost);
+
+                document.getElementById('title-row-c').innerText = 'C. Energi Peleburan, Refraktori & Tenaga';
+                document.getElementById('desc-melting').innerText = `Listrik ${formatRp(electricityPerKgLiquid)}/kg + Lining + Upah`;
+                document.getElementById('val-melting').innerText = formatRp(totalMeltingCost);
+
+                document.getElementById('desc-risk-ovh').innerText = `Reject Cor ${rejectPct}% + Overhead Pabrik ${overheadPct}%`;
+            } else if (currentProdMode === 'SUB_FULL') {
+                const vendorName = document.getElementById('subVendorName').value || 'Vendor Subkon';
+                document.getElementById('title-row-a1').innerText = `A. Pembelian Coran Mentah (${vendorName})`;
+                document.getElementById('desc-gross-metal').innerText = subPricingBasis === 'PER_KG_NET' ? `${netW} kg × ${formatRp(subRawPrice)}/kg` : `Harga borongan per pcs`;
+                document.getElementById('val-gross-metal').innerText = formatRp(subVendorBaseCost);
+
+                document.getElementById('row-scrap-credit').classList.add('hidden');
+
+                document.getElementById('title-row-b').innerText = 'B. Biaya Moulding, Setting & Amortisasi Pola';
+                document.getElementById('desc-molding').innerText = `Moulding ${formatRp(mouldingFeePerPcs)} + Rawat Pola ${formatRp(patternMaintPerPcs)} + Amortisasi`;
+                document.getElementById('val-molding').innerText = formatRp(sharedMouldingPatternCost);
+
+                document.getElementById('title-row-c').innerText = 'C. Transport Ambil Coran dari Subkon';
+                document.getElementById('desc-melting').innerText = `${netW} kg × ${formatRp(subTransportPerKg)}/kg`;
+                document.getElementById('val-melting').innerText = formatRp(subTransportCostPerPcs);
+
+                document.getElementById('desc-risk-ovh').innerText = `Risiko Keropos Bubut ${subHiddenDefectPct}% + Overhead ${overheadPct}%`;
+            } else if (currentProdMode === 'SUB_TOLL') {
+                document.getElementById('title-row-a1').innerText = 'A1. Bahan Baku Kita (Dikirim ke Vendor)';
+                document.getElementById('desc-gross-metal').innerText = `${requiredMeltWeight.toFixed(2)} kg × ${formatRp(effectiveLiquidPrice)}`;
+                document.getElementById('val-gross-metal').innerText = formatRp(grossMetalCost);
+
+                document.getElementById('row-scrap-credit').classList.remove('hidden');
+                document.getElementById('desc-scrap-credit').innerText = `${recoveredScrapWeight.toFixed(2)} kg kembali × ${formatRp(priceReturn)}`;
+                document.getElementById('val-scrap-credit').innerText = '- ' + formatRp(scrapCreditValue);
+
+                document.getElementById('title-row-b').innerText = 'B. Biaya Moulding, Setting & Amortisasi Pola';
+                document.getElementById('desc-molding').innerText = `Moulding ${formatRp(mouldingFeePerPcs)} + Rawat Pola ${formatRp(patternMaintPerPcs)} + Amortisasi`;
+                document.getElementById('val-molding').innerText = formatRp(sharedMouldingPatternCost);
+
+                document.getElementById('title-row-c').innerText = 'C. Jasa Maklon Cetak-Lebur & Transport';
+                document.getElementById('desc-melting').innerText = `Jasa ${formatRp(subTollFeePerKg)}/kg + Transport ${formatRp(subTransportPerKg)}/kg`;
+                document.getElementById('val-melting').innerText = formatRp(subTollServiceCost + subTransportCostPerPcs);
+
+                document.getElementById('desc-risk-ovh').innerText = `Risiko Keropos Bubut ${subHiddenDefectPct}% + Overhead ${overheadPct}%`;
+            }
+
+            document.getElementById('desc-finishing').innerText = `Alat & Cat (${formatRp(totalConsumablesAndPaint)}) + Bubut + Upah Gerinda`;
+            document.getElementById('val-finishing').innerText = formatRp(totalFinishingCost);
+            document.getElementById('val-risk-ovh').innerText = formatRp(activeRiskOvhTotal);
+            document.getElementById('val-logistics').innerText = formatRp(logisticsCostPerPcs);
+
+            // Update Progress Bars
+            const totalForBar = Math.max(1, totalHppPerPcs);
+            document.getElementById('bar-mat').style.width = ((activeMatCostForBar / totalForBar) * 100).toFixed(1) + '%';
+            document.getElementById('bar-mold').style.width = ((activeMoldCostForBar / totalForBar) * 100).toFixed(1) + '%';
+            document.getElementById('bar-melt').style.width = ((activeMeltCostForBar / totalForBar) * 100).toFixed(1) + '%';
+            document.getElementById('bar-fin').style.width = ((totalFinishingCost / totalForBar) * 100).toFixed(1) + '%';
+            document.getElementById('bar-ovh').style.width = (((activeRiskOvhTotal + logisticsCostPerPcs) / totalForBar) * 100).toFixed(1) + '%';
+
+            // Update Batch Tonnage Info
+            const totalLiquidBatch = requiredMeltWeight * qty;
+            const totalNetBatch = netW * qty;
+            document.getElementById('batch-liquid-req').innerText = currentProdMode === 'SUB_FULL'
+                ? 'Dilebur oleh Vendor Subkon'
+                : `${Math.round(totalLiquidBatch).toLocaleString('id-ID')} kg (${(totalLiquidBatch / 1000).toFixed(2)} Ton)`;
+            document.getElementById('batch-net-deliv').innerText = `${Math.round(totalNetBatch).toLocaleString('id-ID')} kg (${(totalNetBatch / 1000).toFixed(2)} Ton)`;
+        }
+
+        // Load Industry Presets
+        function loadPreset(type) {
+            if (type === 'FC250') {
+                document.getElementById('partName').value = 'Pulley V-Belt SPB 300 x 4 Jalur';
+                document.getElementById('alloyGrade').value = 'FC250';
+                document.getElementById('orderQty').value = 100;
+                document.getElementById('netWeight').value = 25;
+                document.getElementById('grossWeight').value = 35;
+                document.getElementById('sandSystem').value = 'GREENSAND';
+                document.getElementById('coreWeight').value = 3.5;
+                document.getElementById('machiningPerPcs').value = 45000;
+            } else if (type === 'FCD500') {
+                document.getElementById('partName').value = 'Body Gate Valve DN150 PN16';
+                document.getElementById('alloyGrade').value = 'FCD500';
+                document.getElementById('orderQty').value = 50;
+                document.getElementById('netWeight').value = 38;
+                document.getElementById('grossWeight').value = 58;
+                document.getElementById('sandSystem').value = 'FURAN';
+                document.getElementById('coreWeight').value = 12;
+                document.getElementById('machiningPerPcs').value = 110000;
+            } else if (type === 'AL') {
+                document.getElementById('partName').value = 'Casing Gearbox Motor Listrik';
+                document.getElementById('alloyGrade').value = 'AL_ADC12';
+                document.getElementById('orderQty').value = 200;
+                document.getElementById('netWeight').value = 4.2;
+                document.getElementById('grossWeight').value = 6.5;
+                document.getElementById('sandSystem').value = 'CO2';
+                document.getElementById('coreWeight').value = 1.2;
+                document.getElementById('machiningPerPcs').value = 25000;
+            }
+            onGradeChange();
+            onSandSystemChange();
+            syncYieldFromWeights();
+            showToast(`Preset produk ${type} berhasil dimuat!`);
+        }
+
+        // Save Current Calculation to History
+        function saveToHistory() {
+            const netW = parseFloat(document.getElementById('netWeight').value) || 1;
+            const grossW = parseFloat(document.getElementById('grossWeight').value) || 1;
+            const yieldPct = currentProdMode === 'SUB_FULL' ? 'Subkon' : ((netW / grossW) * 100).toFixed(1) + '%';
+            const modeLabel = currentProdMode === 'INHOUSE' ? 'In-House' : (currentProdMode === 'SUB_FULL' ? 'Subkon' : 'Maklon');
+
+            const hppPcsText = document.getElementById('res-hpp-pcs').innerText.replace(/[^0-9]/g, '');
+            const sellPcsText = document.getElementById('res-selling-pcs').innerText.split('/')[0].replace(/[^0-9]/g, '');
+
+            const hppPcs = parseFloat(hppPcsText) || 0;
+            const sellPcs = parseFloat(sellPcsText) || 0;
+
+            calculationHistory.unshift({
+                date: '14 Okt 2026',
+                partName: document.getElementById('partName').value,
+                clientName: document.getElementById('clientName').value,
+                grade: `${document.getElementById('alloyGrade').value} (${modeLabel})`,
+                netWeight: netW,
+                grossWeight: currentProdMode === 'SUB_FULL' ? netW : grossW,
+                yieldPct: yieldPct,
+                hppKg: Math.round(hppPcs / netW),
+                sellKg: Math.round(sellPcs / netW),
+                sellPcs: sellPcs
+            });
+
+            document.getElementById('history-badge').innerText = calculationHistory.length;
+            renderHistoryTable();
+            showToast('Kalkulasi berhasil disimpan ke Riwayat!');
+        }
+
+        // Render History Table
+        function renderHistoryTable() {
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+            calculationHistory.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-slate-500">${item.date}</td>
+                    <td class="py-3 px-4">
+                        <span class="font-bold text-slate-800 block">${item.partName}</span>
+                        <span class="text-[11px] text-slate-400">${item.clientName}</span>
+                    </td>
+                    <td class="py-3 px-4"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-semibold">${item.grade}</span></td>
+                    <td class="py-3 px-4 text-center font-mono">${item.netWeight} / ${item.grossWeight} kg <span class="text-emerald-600 font-bold">(${item.yieldPct})</span></td>
+                    <td class="py-3 px-4 text-right font-mono">${formatRp(item.hppKg)}</td>
+                    <td class="py-3 px-4 text-right font-mono font-bold text-emerald-700">${formatRp(item.sellKg)}</td>
+                    <td class="py-3 px-4 text-right font-mono font-bold text-slate-900">${formatRp(item.sellPcs)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="deleteHistory(${idx})" class="text-rose-500 hover:text-rose-700 px-2 py-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteHistory(idx) {
+            calculationHistory.splice(idx, 1);
+            document.getElementById('history-badge').innerText = calculationHistory.length;
+            renderHistoryTable();
+        }
+
+        // Open & Populate Quotation Modal
+        function openQuotationModal() {
+            const qty = parseFloat(document.getElementById('orderQty').value) || 1;
+            const netW = parseFloat(document.getElementById('netWeight').value) || 1;
+            const taxPct = parseFloat(document.getElementById('taxPct').value) || 0;
+            const sellPcsText = document.getElementById('res-selling-pcs').innerText.split('/')[0].replace(/[^0-9]/g, '');
+            const sellPcs = parseFloat(sellPcsText) || 0;
+            const sellKg = sellPcs / netW;
+            const subtotal = sellPcs * qty;
+            const taxVal = subtotal * (taxPct / 100);
+            const grandTotal = subtotal + taxVal;
+
+            document.getElementById('quo-company').innerText = document.getElementById('mst-company').value;
+            document.getElementById('quo-client').innerText = document.getElementById('clientName').value;
+            document.getElementById('quo-part').innerText = document.getElementById('partName').value;
+            document.getElementById('quo-grade').innerText = document.getElementById('alloyGrade').options[document.getElementById('alloyGrade').selectedIndex].text;
+            document.getElementById('quo-weight').innerText = netW.toFixed(1);
+            document.getElementById('quo-qty').innerText = qty.toLocaleString('id-ID') + ' Pcs';
+            document.getElementById('quo-price-kg').innerText = formatRp(sellKg);
+            document.getElementById('quo-price-pcs').innerText = formatRp(sellPcs);
+            document.getElementById('quo-subtotal').innerText = formatRp(subtotal);
+            document.getElementById('quo-foot-sub').innerText = formatRp(subtotal);
+            document.getElementById('quo-tax-pct').innerText = taxPct;
+            document.getElementById('quo-foot-tax').innerText = formatRp(taxVal);
+            document.getElementById('quo-foot-grand').innerText = formatRp(grandTotal);
+
+            document.getElementById('quotation-modal').classList.remove('hidden');
+        }
+
+        function closeQuotationModal() {
+            document.getElementById('quotation-modal').classList.add('hidden');
+        }
+
+        // Initialize on Window Load
+        window.onload = function() {
+            syncYieldFromWeights();
+            renderHistoryTable();
+        };
+    </script>
+</body>
+</html>
