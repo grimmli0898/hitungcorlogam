@@ -72,6 +72,10 @@
             top: auto !important;
             transform: none !important;
         }
+        /* Dynamic Step Counter */
+        .step-badge-num {
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
@@ -187,15 +191,37 @@
                                 <span class="text-[11px] bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-semibold" id="subkon-type-desc">Skema: Beli Putus Coran Mentah</span>
                             </div>
 
-                            <!-- Row 1: Vendor Name & Toggle Mode (Multi-Row Detail vs Quick Input) -->
+                            <!-- Identitas Pekerjaan, Klien & Vendor Subkon (Menyatu di Atas) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-3 rounded-xl border border-blue-200/90 shadow-sm">
+                                <div class="sm:col-span-4">
+                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Nama Komponen / Pekerjaan</label>
+                                    <input type="text" id="subPartName" value="Pulley V-Belt SPB 300 x 4 Jalur" oninput="syncIdentityFields('SUB')" placeholder="Misal: Ornamen Kursi, Roofdrain..." class="w-full px-2.5 py-1.5 text-xs font-semibold border border-slate-300 rounded-lg bg-white focus:border-orange-500 focus:outline-none">
+                                </div>
+                                <div class="sm:col-span-4">
+                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Nama Klien / Customer</label>
+                                    <input type="text" id="subClientName" value="PT. Maju Teknik Mandiri" oninput="syncIdentityFields('SUB')" placeholder="Nama perusahaan klien..." class="w-full px-2.5 py-1.5 text-xs font-semibold border border-slate-300 rounded-lg bg-white focus:border-orange-500 focus:outline-none">
+                                </div>
+                                <div class="sm:col-span-4">
+                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Nama Vendor / Mitra Cor</label>
+                                    <input type="text" id="subVendorName" value="CV. Mitra Ceper Foundry" oninput="calculateAll()" class="w-full px-2.5 py-1.5 text-xs font-semibold border border-slate-300 rounded-lg bg-white focus:border-orange-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <!-- Row 1B: Spesifikasi Material & Toggle Mode Input Nota Subkon -->
                             <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                                <div class="sm:col-span-5">
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Vendor / Mitra Cor</label>
-                                    <input type="text" id="subVendorName" value="CV. Mitra Ceper Foundry" oninput="calculateAll()" class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg bg-white font-medium">
+                                <div class="sm:col-span-4">
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Spesifikasi Material Cor</label>
+                                    <select id="subAlloyGrade" onchange="syncSubGradeChange()" class="w-full px-3 py-2 text-xs font-bold border border-slate-300 rounded-lg bg-white text-slate-800">
+                                        <option value="FC250">FC 250 (Cast Iron)</option>
+                                        <option value="FCD500">FCD 500 (Ductile Iron)</option>
+                                        <option value="SS400">SC 450 / Cast Steel</option>
+                                        <option value="AL_ADC12">Aluminium ADC12 / AlSi</option>
+                                        <option value="BRONZE">Bronze AB2 / Kuningan</option>
+                                    </select>
                                 </div>
 
                                 <!-- Toggle Mode Input Nota Subkon (untuk SUB_FULL) -->
-                                <div id="wrap-sub-scheme-select" class="sm:col-span-7">
+                                <div id="wrap-sub-scheme-select" class="sm:col-span-8">
                                     <label class="block text-xs font-semibold text-blue-900 mb-1">Mode Input Tagihan Nota Subkon</label>
                                     <div class="grid grid-cols-2 gap-1.5 bg-slate-200/80 p-1 rounded-xl border border-slate-300">
                                         <button type="button" id="btn-submode-detail" onclick="setSubInputMode('DETAIL_TABLE')" class="py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-orange-600 text-white shadow-sm">
@@ -215,7 +241,7 @@
                                 </div>
 
                                 <!-- Input Tarif Jasa Maklon (untuk SUB_TOLL) -->
-                                <div id="wrap-sub-toll-rate" class="hidden sm:col-span-7">
+                                <div id="wrap-sub-toll-rate" class="hidden sm:col-span-8">
                                     <label class="block text-xs font-semibold text-purple-900 mb-1">Tarif Jasa Maklon Cetak + Lebur (Bahan Baku dari Kita)</label>
                                     <div class="flex items-center">
                                         <span class="bg-purple-100 border border-r-0 border-purple-400 px-2.5 py-2 text-xs font-bold text-purple-900 rounded-l-lg">Rp</span>
@@ -274,9 +300,43 @@
                                         <span>Semua kolom otomatis menghitung subtotal real-time</span>
                                     </div>
 
+                                    <!-- MODUL BARU: DAFTAR BIAYA TAMBAHAN DARI SUBKON (DINAMIS / CUSTOMIZABLE) -->
+                                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
+                                        <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200 pb-2.5">
+                                            <div>
+                                                <h5 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-layer-group text-orange-600"></i> Biaya Tambahan dari Subkon (Di Luar Cor Pokok)
+                                                </h5>
+                                                <p class="text-[10px] text-slate-500">Catat tagihan ekstra pada nota vendor seperti ongkos cetak borongan, pasir resin/CO2, inti, atau bongkar muat</p>
+                                            </div>
+                                            <button type="button" onclick="addSubCustomExtraItem()" class="bg-slate-800 hover:bg-orange-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1">
+                                                <i class="fa-solid fa-plus"></i> Tambah Biaya Subkon
+                                            </button>
+                                        </div>
+
+                                        <!-- Quick Preset Chips -->
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="text-[10px] font-semibold text-slate-400 mr-1"><i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i>Input Cepat:</span>
+                                            <button type="button" onclick="addSubCustomExtraPreset('Ongkos Cetak Komponen Sulit', 27500, 'CUSTOM_PCS', 2)" class="text-[10px] font-semibold bg-white hover:bg-orange-50 text-slate-700 hover:text-orange-700 border border-slate-300 hover:border-orange-300 px-2 py-1 rounded-full transition flex items-center gap-1">
+                                                <i class="fa-solid fa-plus text-[9px] text-orange-500"></i> Ongkos Cetak (Custom Pcs)
+                                            </button>
+                                            <button type="button" onclick="addSubCustomExtraPreset('Tambahan Pasir Resin / Inti (Core)', 15000, 'ITEM_LINK:0', 1)" class="text-[10px] font-semibold bg-white hover:bg-orange-50 text-slate-700 hover:text-orange-700 border border-slate-300 hover:border-orange-300 px-2 py-1 rounded-full transition flex items-center gap-1">
+                                                <i class="fa-solid fa-plus text-[9px] text-orange-500"></i> Pasir Resin/Inti (Per Item)
+                                            </button>
+                                            <button type="button" onclick="addSubCustomExtraPreset('Jasa Bongkar Muat / Poles Luar', 150000, 'PER_PROJECT', 1)" class="text-[10px] font-semibold bg-white hover:bg-orange-50 text-slate-700 hover:text-orange-700 border border-slate-300 hover:border-orange-300 px-2 py-1 rounded-full transition flex items-center gap-1">
+                                                <i class="fa-solid fa-plus text-[9px] text-orange-500"></i> Bongkar Muat (Flat Projek)
+                                            </button>
+                                        </div>
+
+                                        <!-- Dynamic Rows Container -->
+                                        <div id="sub-custom-extra-list" class="space-y-2">
+                                            <!-- Rendered via JS -->
+                                        </div>
+                                    </div>
+
                                     <!-- Summary Accumulation Bar -->
-                                    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-3.5 rounded-xl border border-slate-700 shadow-inner">
-                                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2.5 border-b border-slate-700/80">
+                                    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-3.5 rounded-xl border border-slate-700 shadow-inner space-y-3">
+                                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-700/80">
                                             <span class="text-[11px] font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
                                                 <i class="fa-solid fa-calculator"></i> Ringkasan Akumulasi Otomatis Nota Subkon
                                             </span>
@@ -284,6 +344,23 @@
                                                 <i class="fa-solid fa-link mr-1"></i>Tersinkronisasi ke Kalkulasi Utama
                                             </span>
                                         </div>
+
+                                        <!-- Breakdown Tagihan Cor Pokok vs Biaya Tambahan -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 text-xs">
+                                            <div class="flex justify-between sm:block px-1">
+                                                <span class="text-[10px] text-slate-400 block">1. Tagihan Cor Pokok (Tabel):</span>
+                                                <span class="font-mono font-bold text-slate-200" id="sub-sum-base-rp">Rp 6.942.500</span>
+                                            </div>
+                                            <div class="flex justify-between sm:block px-1 sm:border-l sm:border-slate-800 sm:pl-3">
+                                                <span class="text-[10px] text-amber-300/90 block">2. Total Biaya Tambahan Subkon:</span>
+                                                <span class="font-mono font-bold text-amber-400" id="sub-sum-extra-rp">+ Rp 0</span>
+                                            </div>
+                                            <div class="flex justify-between sm:block px-1 sm:border-l sm:border-slate-800 sm:pl-3">
+                                                <span class="text-[10px] text-orange-400 font-semibold block">Grand Total Tagihan Subkon:</span>
+                                                <span class="font-mono font-extrabold text-orange-400 text-sm" id="sub-sum-grand-rp">Rp 6.942.500</span>
+                                            </div>
+                                        </div>
+
                                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center">
                                             <div class="bg-slate-800/90 p-2 rounded-lg border border-slate-700">
                                                 <span class="text-[10px] text-slate-400 block">Total Qty Order</span>
@@ -298,7 +375,7 @@
                                                 <span class="text-xs sm:text-sm font-bold font-mono text-slate-200" id="sub-sum-avg-weight">9,63 kg/pcs</span>
                                             </div>
                                             <div class="bg-slate-800/90 p-2 rounded-lg border border-orange-500/40">
-                                                <span class="text-[10px] text-orange-300 block">Total Tagihan Subkon</span>
+                                                <span class="text-[10px] text-orange-300 block">Grand Total Nota</span>
                                                 <span class="text-xs sm:text-sm font-extrabold font-mono text-orange-400" id="sub-sum-total-rp">Rp 6.942.500</span>
                                             </div>
                                             <div class="col-span-2 sm:col-span-1 bg-slate-800/90 p-2 rounded-lg border border-emerald-500/40">
@@ -311,6 +388,22 @@
 
                                 <!-- WRAPPER MODE INPUT CEPAT (GELONDONGAN) -->
                                 <div id="sub-quick-mode-wrapper" class="hidden space-y-3">
+                                    <!-- Quick Qty & Weight Specification Bar (Agar tidak butuh Card No.1 lagi) -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-100 p-3 rounded-xl border border-slate-200">
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-700 mb-1">Total Qty Order (Pcs)</label>
+                                            <input type="text" inputmode="numeric" id="subQuickQty" value="100" oninput="formatThousandInput(this); syncQuickSubSpecs('QTY')" class="w-full px-2.5 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg bg-white text-slate-900">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-700 mb-1">Total Berat Jadi Order (Kg)</label>
+                                            <input type="text" inputmode="decimal" id="subQuickTotalKg" value="2.500" oninput="formatThousandInput(this); syncQuickSubSpecs('TOTAL_KG')" class="w-full px-2.5 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg bg-white text-blue-900">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-700 mb-1">Berat Rata-rata / Pcs (Kg)</label>
+                                            <input type="number" step="0.1" min="0.1" id="subQuickPcsKg" value="25" oninput="syncQuickSubSpecs('PCS_KG')" class="w-full px-2.5 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg bg-white text-emerald-900">
+                                        </div>
+                                    </div>
+
                                     <div class="flex flex-wrap items-center justify-between gap-2 bg-blue-50/70 p-2.5 rounded-lg border border-blue-200">
                                         <span class="text-xs font-bold text-blue-900">Pilih Skema Input Cepat:</span>
                                         <select id="subQuickSchemeSelect" onchange="onQuickSchemeChange()" class="px-3 py-1.5 text-xs font-bold border border-blue-400 rounded-lg bg-white text-blue-950 focus:outline-none">
@@ -450,11 +543,11 @@
                     </div>
                 </div>
 
-                <!-- Section 1: Identitas & Spesifikasi Bobot -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <!-- Section 1: Identitas & Spesifikasi Bobot (Hanya tampil saat Mode Cor Sendiri / Maklon) -->
+                <div id="section-spec-inhouse" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
                         <div class="flex items-center gap-2.5">
-                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">1</span>
+                            <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">1</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec1">Spesifikasi Komponen & Casting Yield</h2>
                         </div>
                         <span id="yield-status-badge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">Yield: 71.4% (Normal)</span>
@@ -463,11 +556,11 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Komponen / Barang Cor</label>
-                                <input type="text" id="partName" value="Pulley V-Belt SPB 300 x 4 Jalur" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                                <input type="text" id="partName" value="Pulley V-Belt SPB 300 x 4 Jalur" oninput="syncIdentityFields('MAIN')" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Klien / Customer</label>
-                                <input type="text" id="clientName" value="PT. Maju Teknik Mandiri" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                                <input type="text" id="clientName" value="PT. Maju Teknik Mandiri" oninput="syncIdentityFields('MAIN')" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
                             </div>
                         </div>
 
@@ -532,10 +625,10 @@
                 </div>
 
                 <!-- Section 2: Bahan Baku & Charge Mix -->
-                <div id="section-raw-material" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-opacity duration-300">
+                <div id="section-raw-material" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-opacity duration-300">
                     <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
                         <div class="flex items-center gap-2.5">
-                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">2</span>
+                            <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">2</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Bahan Baku Logam Cair & Charge Mix</h2>
                         </div>
                         <span id="badge-sec2-status" class="text-xs text-slate-500">Harga mengacu pada Database Master</span>
@@ -607,11 +700,11 @@
                 </div>
 
                 <!-- Section 3: Biaya Moulding, Cetakan, Inti & Pola -->
-                <div id="section-molding" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
+                <div id="section-molding" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
                     <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
                         <label class="flex items-center gap-2.5 cursor-pointer select-none">
                             <input type="checkbox" id="chk-section-molding" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded border-slate-300 focus:ring-orange-500">
-                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">3</span>
+                            <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">3</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Biaya Moulding (Cetakan), Inti & Pola</h2>
                         </label>
                         <span id="badge-sec3-status" class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full font-medium">Centang item yang diperlukan</span>
@@ -715,11 +808,11 @@
                 </div>
 
                 <!-- Section 4: Energi Peleburan, Alat Finishing (Gerinda/Cat), Machining & QC -->
-                <div id="section-finishing-main" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
+                <div id="section-finishing-main" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
                     <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
                         <label class="flex items-center gap-2.5 cursor-pointer select-none">
                             <input type="checkbox" id="chk-section-finishing" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded border-slate-300 focus:ring-orange-500">
-                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">4</span>
+                            <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">4</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec4">Peleburan & Proses Internal: Finishing, Machining & QC</h2>
                         </label>
                         <span id="badge-sec4-status" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">Turunan bisa di-checklist</span>
@@ -893,10 +986,10 @@
                 </div>
 
                 <!-- Section 5: Risiko Reject, Overhead, Margin & Pajak -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div id="section-risk-margin" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
                         <div class="flex items-center gap-2.5">
-                            <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">5</span>
+                            <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">5</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Risiko Gagal Cor (Scrap Rate), Overhead & Margin</h2>
                         </div>
                     </div>
@@ -1448,6 +1541,308 @@
 
         let subInvoiceItems = JSON.parse(JSON.stringify(defaultSubInvoiceItems));
 
+        // Dynamic Extra Costs from Subkon (Outside main casting rows)
+        // basis options: 'PER_PROJECT' | 'CUSTOM_PCS' | 'ITEM_LINK:{idx}' | 'PER_PCS_ALL' | 'PER_KG'
+        const defaultSubCustomExtras = [
+            {
+                id: 201,
+                name: 'Ongkos Cetak Komponen Sulit',
+                amount: 0,
+                basis: 'CUSTOM_PCS',
+                customQty: 2
+            }
+        ];
+        let subCustomExtras = JSON.parse(JSON.stringify(defaultSubCustomExtras));
+
+        // Update Dynamic Step Badges (1, 2, 3...) only on visible cards
+        function updateDynamicStepNumbers() {
+            const cards = document.querySelectorAll('.step-card');
+            let num = 1;
+            cards.forEach(card => {
+                if (!card.classList.contains('hidden') && card.style.display !== 'none') {
+                    const badge = card.querySelector('.step-badge-num');
+                    if (badge) {
+                        badge.innerText = num++;
+                    }
+                }
+            });
+        }
+
+        // Sync Identity Fields between Top Subkon Panel and Main In-House Spec Card
+        function syncIdentityFields(source) {
+            const mainPart = document.getElementById('partName');
+            const mainClient = document.getElementById('clientName');
+            const subPart = document.getElementById('subPartName');
+            const subClient = document.getElementById('subClientName');
+
+            if (source === 'SUB') {
+                if (mainPart && subPart) mainPart.value = subPart.value;
+                if (mainClient && subClient) mainClient.value = subClient.value;
+            } else {
+                if (subPart && mainPart) subPart.value = mainPart.value;
+                if (subClient && mainClient) subClient.value = mainClient.value;
+            }
+            calculateAll(true, true);
+        }
+
+        function syncSubGradeChange() {
+            const subGrade = document.getElementById('subAlloyGrade');
+            const mainGrade = document.getElementById('alloyGrade');
+            if (subGrade && mainGrade) {
+                mainGrade.value = subGrade.value;
+                onGradeChange();
+            }
+        }
+
+        function syncQuickSubSpecs(type) {
+            const qQtyEl = document.getElementById('subQuickQty');
+            const qTotKgEl = document.getElementById('subQuickTotalKg');
+            const qPcsKgEl = document.getElementById('subQuickPcsKg');
+
+            const qty = Math.max(1, getNum('subQuickQty') || 1);
+            if (type === 'QTY') {
+                const pcsW = Math.max(0.1, parseFloat(qPcsKgEl.value) || 1);
+                const totW = Math.round(qty * pcsW);
+                setFormattedVal('subQuickTotalKg', totW);
+                setFormattedVal('orderQty', qty);
+                syncSubkonWeightInputs('QTY');
+            } else if (type === 'TOTAL_KG') {
+                const totW = Math.max(0.1, getNum('subQuickTotalKg') || qty);
+                const pcsW = +(totW / qty).toFixed(2);
+                qPcsKgEl.value = pcsW;
+                setFormattedVal('orderQty', qty);
+                setFormattedVal('subSpecTotalWeight', totW);
+                syncSubkonWeightInputs('TOTAL');
+            } else if (type === 'PCS_KG') {
+                const pcsW = Math.max(0.1, parseFloat(qPcsKgEl.value) || 1);
+                const totW = Math.round(qty * pcsW);
+                setFormattedVal('subQuickTotalKg', totW);
+                setFormattedVal('orderQty', qty);
+                document.getElementById('subSpecPcsWeight').value = pcsW;
+                syncSubkonWeightInputs('PCS');
+            }
+        }
+
+        function getSubTableTotals() {
+            let totalQty = 0;
+            let totalKg = 0;
+            let baseRp = 0;
+            if (subInvoiceItems && subInvoiceItems.length > 0) {
+                subInvoiceItems.forEach(item => {
+                    const rQty = Math.max(1, Number(item.qty) || 1);
+                    const rWVal = Math.max(0, Number(item.weightVal) || 0);
+                    const rTotalKg = item.weightMode === 'TOTAL_KG' ? rWVal : (rWVal * rQty);
+                    const rRate = Math.max(0, Number(item.ratePerKg) || 0);
+                    const rCastCost = rTotalKg * rRate;
+                    const rExtraVal = Math.max(0, Number(item.extraMoldingVal) || 0);
+                    const rExtraCost = item.extraMoldingMode === 'PER_PCS' ? (rExtraVal * rQty) : rExtraVal;
+                    totalQty += rQty;
+                    totalKg += rTotalKg;
+                    baseRp += (rCastCost + rExtraCost);
+                });
+            }
+            return { totalQty, totalKg, baseRp };
+        }
+
+        function computeSingleExtraRow(extra, totalQty, totalKg) {
+            const nominal = Math.max(0, Number(extra.amount) || 0);
+            const basis = extra.basis || 'PER_PROJECT';
+            let subtotal = nominal;
+            let multiplierHint = 'Flat 1x Projek';
+
+            if (basis === 'PER_PROJECT') {
+                subtotal = nominal;
+                multiplierHint = 'Flat 1x Projek';
+            } else if (basis === 'CUSTOM_PCS') {
+                const cQty = Math.max(0, Number(extra.customQty) || 0);
+                subtotal = nominal * cQty;
+                multiplierHint = `× ${cQty.toLocaleString('id-ID')} pcs (Custom)`;
+            } else if (basis.startsWith('ITEM_LINK:')) {
+                const itemIdx = parseInt(basis.split(':')[1], 10);
+                const linkedItem = subInvoiceItems[itemIdx];
+                if (linkedItem) {
+                    const lQty = Math.max(1, Number(linkedItem.qty) || 1);
+                    subtotal = nominal * lQty;
+                    multiplierHint = `× ${lQty.toLocaleString('id-ID')} pcs (${linkedItem.name})`;
+                } else {
+                    const fallbackQty = Math.max(1, Number(extra.customQty) || 1);
+                    subtotal = nominal * fallbackQty;
+                    multiplierHint = `× ${fallbackQty} pcs`;
+                }
+            } else if (basis === 'PER_PCS_ALL' || basis === 'PER_PCS') {
+                subtotal = nominal * totalQty;
+                multiplierHint = `× ${totalQty.toLocaleString('id-ID')} pcs (Semua Order)`;
+            } else if (basis === 'PER_KG') {
+                subtotal = nominal * totalKg;
+                multiplierHint = `× ${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg (Total Berat)`;
+            }
+
+            return { nominal, subtotal, multiplierHint };
+        }
+
+        function renderSubCustomExtraList() {
+            const container = document.getElementById('sub-custom-extra-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!subCustomExtras || subCustomExtras.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-2.5 px-3 bg-white rounded-lg border border-dashed border-slate-300 text-[11px] text-slate-400">
+                        Belum ada biaya tambahan subkon. Klik <b>"+ Tambah Biaya Subkon"</b> atau pilih tombol cepat di atas jika ada tagihan ekstra.
+                    </div>
+                `;
+                return;
+            }
+
+            const { totalQty, totalKg } = getSubTableTotals();
+
+            subCustomExtras.forEach((extra, idx) => {
+                const { nominal, subtotal, multiplierHint } = computeSingleExtraRow(extra, totalQty, totalKg);
+                const basis = extra.basis || 'PER_PROJECT';
+                const isCustomPcs = basis === 'CUSTOM_PCS';
+
+                // Build dynamic options for linked items from Subkon Detail Table
+                let linkedItemOptionsHtml = '';
+                if (subInvoiceItems && subInvoiceItems.length > 0) {
+                    subInvoiceItems.forEach((it, itIdx) => {
+                        const optVal = `ITEM_LINK:${itIdx}`;
+                        const sel = basis === optVal ? 'selected' : '';
+                        const safeName = (it.name || `Item #${itIdx + 1}`).substring(0, 26);
+                        linkedItemOptionsHtml += `<option value="${optVal}" ${sel}>Hanya: ${safeName} (${it.qty} pcs)</option>`;
+                    });
+                }
+
+                const row = document.createElement('div');
+                row.className = 'grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm hover:border-orange-300 transition';
+                row.innerHTML = `
+                    <div class="sm:col-span-3">
+                        <input type="text" value="${extra.name}" oninput="updateSubCustomExtra(${idx}, 'name', this.value)" placeholder="Keterangan biaya (misal: Ongkos Cetak)..." class="w-full px-2.5 py-1.5 text-xs font-semibold text-slate-800 border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <div class="flex items-stretch">
+                            <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-600 text-[10px] font-bold px-2 py-1.5 rounded-l-lg flex items-center shrink-0">Rp</span>
+                            <input type="text" inputmode="numeric" value="${Math.round(nominal).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateSubCustomExtra(${idx}, 'amount', this.value)" class="w-full px-2 py-1.5 text-xs font-mono font-bold text-right text-slate-900 border border-slate-300 rounded-r-lg focus:border-orange-500 focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="sm:col-span-3 flex items-center gap-1.5">
+                        <select onchange="updateSubCustomExtra(${idx}, 'basis', this.value)" class="w-full px-2 py-1.5 text-[11px] font-bold text-slate-700 bg-slate-100 border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none cursor-pointer">
+                            <option value="CUSTOM_PCS" ${basis === 'CUSTOM_PCS' ? 'selected' : ''}>Custom Qty (Sebagian Pcs)</option>
+                            <optgroup label="Pilih Item Terkait dari Nota">
+                                ${linkedItemOptionsHtml}
+                            </optgroup>
+                            <optgroup label="Basis Keseluruhan Projek">
+                                <option value="PER_PROJECT" ${basis === 'PER_PROJECT' ? 'selected' : ''}>Per Projek (Flat 1x)</option>
+                                <option value="PER_PCS_ALL" ${(basis === 'PER_PCS_ALL' || basis === 'PER_PCS') ? 'selected' : ''}>Semua Qty Order (${totalQty} pcs)</option>
+                                <option value="PER_KG" ${basis === 'PER_KG' ? 'selected' : ''}>Per Kg Total (${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg)</option>
+                            </optgroup>
+                        </select>
+                        ${isCustomPcs ? `
+                        <div class="flex items-stretch shrink-0 w-24" title="Masukkan jumlah pcs yang dikenakan biaya ini">
+                            <input type="number" min="1" step="1" value="${extra.customQty ?? 1}" oninput="updateSubCustomExtra(${idx}, 'customQty', this.value)" class="w-full px-1.5 py-1.5 text-xs font-mono font-extrabold text-center text-orange-900 bg-orange-50 border border-orange-400 rounded-l-lg focus:outline-none">
+                            <span class="bg-orange-100 border border-l-0 border-orange-400 text-orange-800 text-[10px] font-bold px-1.5 py-1.5 rounded-r-lg flex items-center">pcs</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="sm:col-span-2 text-right">
+                        <span class="font-mono font-bold text-xs text-amber-700 block sub-extra-row-subtotal">${formatRp(subtotal)}</span>
+                        <span class="text-[10px] font-mono text-slate-400 block sub-extra-row-hint truncate" title="${multiplierHint}">${multiplierHint}</span>
+                    </div>
+                    <div class="sm:col-span-1 text-right sm:text-center">
+                        <button type="button" onclick="removeSubCustomExtra(${idx})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Hapus Biaya Tambahan">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateSubCustomExtra(idx, field, rawVal) {
+            if (!subCustomExtras[idx]) return;
+            if (field === 'name' || field === 'basis') {
+                subCustomExtras[idx][field] = rawVal;
+            } else if (field === 'customQty') {
+                subCustomExtras[idx].customQty = Math.max(0, parseFloat(rawVal) || 0);
+            } else {
+                const cleanNum = parseFloat(String(rawVal).replace(/\./g, '').replace(',', '.')) || 0;
+                subCustomExtras[idx][field] = cleanNum;
+            }
+            if (field === 'basis') {
+                if (rawVal === 'CUSTOM_PCS' && !subCustomExtras[idx].customQty) {
+                    subCustomExtras[idx].customQty = 2;
+                }
+                renderSubCustomExtraList();
+            }
+            calculateAll(true, true);
+            updateSubCustomExtraLiveCells();
+        }
+
+        function updateSubCustomExtraLiveCells() {
+            const container = document.getElementById('sub-custom-extra-list');
+            if (!container) return;
+            const { totalQty, totalKg } = getSubTableTotals();
+            const rows = container.children;
+            subCustomExtras.forEach((extra, idx) => {
+                const row = rows[idx];
+                if (!row) return;
+                const { subtotal, multiplierHint } = computeSingleExtraRow(extra, totalQty, totalKg);
+                const subEl = row.querySelector('.sub-extra-row-subtotal');
+                if (subEl) subEl.innerText = formatRp(subtotal);
+                const hintEl = row.querySelector('.sub-extra-row-hint');
+                if (hintEl) {
+                    hintEl.innerText = multiplierHint;
+                    hintEl.title = multiplierHint;
+                }
+            });
+        }
+
+        function addSubCustomExtraItem() {
+            subCustomExtras.push({
+                id: Date.now(),
+                name: 'Ongkos Cetak / Inti Tambahan #' + (subCustomExtras.length + 1),
+                amount: 27500,
+                basis: 'CUSTOM_PCS',
+                customQty: 2
+            });
+            renderSubCustomExtraList();
+            calculateAll(true, true);
+            showToast('Baris biaya tambahan subkon ditambahkan!');
+        }
+
+        function addSubCustomExtraPreset(label, defaultAmount, basisType, defaultCustomQty = 1) {
+            let resolvedBasis = basisType;
+            if (basisType.startsWith('ITEM_LINK:') && (!subInvoiceItems || subInvoiceItems.length === 0)) {
+                resolvedBasis = 'CUSTOM_PCS';
+            }
+            // If first default item is still 0, replace it instead of pushing new row
+            if (subCustomExtras.length === 1 && subCustomExtras[0].amount === 0) {
+                subCustomExtras[0] = {
+                    id: Date.now(),
+                    name: label,
+                    amount: defaultAmount,
+                    basis: resolvedBasis,
+                    customQty: defaultCustomQty
+                };
+            } else {
+                subCustomExtras.push({
+                    id: Date.now(),
+                    name: label,
+                    amount: defaultAmount,
+                    basis: resolvedBasis,
+                    customQty: defaultCustomQty
+                });
+            }
+            renderSubCustomExtraList();
+            calculateAll(true, true);
+            showToast(`Preset "${label}" ditambahkan!`);
+        }
+
+        function removeSubCustomExtra(idx) {
+            subCustomExtras.splice(idx, 1);
+            renderSubCustomExtraList();
+            calculateAll(true, true);
+        }
+
         // Render Multi-Row Subkon Invoice Table
         function renderSubInvoiceTable() {
             const tbody = document.getElementById('sub-invoice-items-tbody');
@@ -1532,6 +1927,9 @@
             if (field === 'weightMode' || field === 'extraMoldingMode') {
                 renderSubInvoiceTable();
             }
+            if (field === 'name' || field === 'qty') {
+                renderSubCustomExtraList();
+            }
             calculateAll(true, true);
             updateSubTableLiveCells();
         }
@@ -1576,6 +1974,7 @@
                 extraMoldingMode: 'PER_PCS'
             });
             renderSubInvoiceTable();
+            renderSubCustomExtraList();
             calculateAll(true, true);
             showToast('Baris item nota subkon baru ditambahkan!');
         }
@@ -1587,14 +1986,17 @@
             }
             subInvoiceItems.splice(idx, 1);
             renderSubInvoiceTable();
+            renderSubCustomExtraList();
             calculateAll(true, true);
         }
 
         function resetSubInvoiceTable() {
             subInvoiceItems = JSON.parse(JSON.stringify(defaultSubInvoiceItems));
+            subCustomExtras = JSON.parse(JSON.stringify(defaultSubCustomExtras));
             renderSubInvoiceTable();
+            renderSubCustomExtraList();
             calculateAll(true, true);
-            showToast('Tabel rincian nota subkon di-reset ke contoh awal!');
+            showToast('Tabel rincian nota & biaya tambahan subkon di-reset!');
         }
 
         function setSubInputMode(mode) {
@@ -1899,6 +2301,7 @@
             const wrapScheme = document.getElementById('wrap-sub-scheme-select');
             const wrapFull = document.getElementById('wrap-sub-full-rate');
             const wrapToll = document.getElementById('wrap-sub-toll-rate');
+            const secSpecInhouse = document.getElementById('section-spec-inhouse');
             const secRaw = document.getElementById('section-raw-material');
             const moldingSandInputs = document.getElementById('molding-sand-inputs');
             const meltingEnergyInputs = document.getElementById('melting-energy-inputs');
@@ -1908,12 +2311,12 @@
             const wrapWeightSubkon = document.getElementById('wrap-weight-subkon');
             const wrapYieldBar = document.getElementById('wrap-yield-bar');
             const titleSec1 = document.getElementById('title-sec1');
-            const yieldBadge = document.getElementById('yield-status-badge');
 
             if (mode === 'INHOUSE') {
                 btnInhouse.className = 'text-left p-3 rounded-xl border-2 border-orange-600 bg-orange-50/60 transition flex flex-col justify-between';
                 pill.innerText = 'Cor Sendiri (In-House)';
                 subPanel.classList.add('hidden');
+                secSpecInhouse.classList.remove('hidden');
                 secRaw.classList.remove('hidden');
                 moldingSandInputs.classList.remove('hidden');
                 meltingEnergyInputs.classList.remove('hidden');
@@ -1932,16 +2335,11 @@
                 wrapToll.classList.add('hidden');
                 document.getElementById('subkon-type-desc').innerText = 'Skema: Beli Coran Mentah dari Vendor, Finishing & Bubut di Tempat Kita';
 
+                // Hilangkan total Card Nomor 1 & Card Bahan Baku saat Mode Subkon Aktif
+                secSpecInhouse.classList.add('hidden');
                 secRaw.classList.add('hidden');
                 moldingSandInputs.classList.add('hidden');
                 meltingEnergyInputs.classList.add('hidden');
-
-                wrapWeightInhouse.classList.add('hidden');
-                wrapWeightSubkon.classList.remove('hidden');
-                wrapYieldBar.classList.add('hidden');
-                titleSec1.innerText = 'Spesifikasi Komponen & Berat Timbangan Subkon';
-                yieldBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800';
-                yieldBadge.innerText = 'Mode Subkon: Berat Timbangan Vendor';
 
                 document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
                 onSubBasisChange();
@@ -1954,6 +2352,7 @@
                 wrapToll.classList.remove('hidden');
                 document.getElementById('subkon-type-desc').innerText = 'Skema: Bahan Baku Logam dari Kita, Bayar Jasa Cetak & Lebur ke Vendor';
 
+                secSpecInhouse.classList.remove('hidden');
                 secRaw.classList.remove('hidden');
                 moldingSandInputs.classList.add('hidden');
                 meltingEnergyInputs.classList.add('hidden');
@@ -1965,6 +2364,7 @@
                 syncYieldFromWeights();
             }
 
+            updateDynamicStepNumbers();
             calculateAll();
         }
 
@@ -2175,13 +2575,14 @@
             }
             if (!skipSubTableRender && document.getElementById('subPricingBasis')?.value === 'DETAIL_TABLE') {
                 renderSubInvoiceTable();
+                renderSubCustomExtraList();
             }
 
             // If in SUB_FULL + DETAIL_TABLE mode, synchronize accumulated Qty, Weight & Total Invoice to main inputs first
             const subPricingBasis = document.getElementById('subPricingBasis').value;
             let detailTableTotalQty = 0;
             let detailTableTotalKg = 0;
-            let detailTableTotalRp = 0;
+            let detailTableBaseRp = 0;
 
             if (subInvoiceItems && subInvoiceItems.length > 0) {
                 subInvoiceItems.forEach(item => {
@@ -2195,16 +2596,37 @@
 
                     detailTableTotalQty += rQty;
                     detailTableTotalKg += rTotalKg;
-                    detailTableTotalRp += (rCastCost + rExtraCost);
+                    detailTableBaseRp += (rCastCost + rExtraCost);
                 });
             }
 
+            // Calculate Dynamic Subkon Extra Costs (supports Custom Qty, Linked Item, Flat Project, Per Kg)
+            let detailTableExtraRp = 0;
+            if (subCustomExtras && subCustomExtras.length > 0) {
+                subCustomExtras.forEach(extra => {
+                    const { subtotal } = computeSingleExtraRow(extra, detailTableTotalQty, detailTableTotalKg);
+                    detailTableExtraRp += subtotal;
+                });
+            }
+
+            const detailTableTotalRp = detailTableBaseRp + detailTableExtraRp;
             const avgWeightFromTable = detailTableTotalQty > 0 ? (detailTableTotalKg / detailTableTotalQty) : 1;
             const avgHppFromTable = detailTableTotalQty > 0 ? (detailTableTotalRp / detailTableTotalQty) : 0;
+
+            // Update Live Hint on Extra Rows if Qty/Kg in main table changed
+            updateSubCustomExtraLiveCells();
+            updateDynamicStepNumbers();
 
             // Update Summary Accumulation Bar in Subkon Detail Table
             const elSumQty = document.getElementById('sub-sum-qty');
             if (elSumQty) {
+                const elBaseRp = document.getElementById('sub-sum-base-rp');
+                const elExtraRp = document.getElementById('sub-sum-extra-rp');
+                const elGrandRp = document.getElementById('sub-sum-grand-rp');
+                if (elBaseRp) elBaseRp.innerText = formatRp(detailTableBaseRp);
+                if (elExtraRp) elExtraRp.innerText = '+ ' + formatRp(detailTableExtraRp);
+                if (elGrandRp) elGrandRp.innerText = formatRp(detailTableTotalRp);
+
                 elSumQty.innerText = detailTableTotalQty.toLocaleString('id-ID') + ' Pcs';
                 document.getElementById('sub-sum-weight').innerText = detailTableTotalKg.toLocaleString('id-ID', {maximumFractionDigits: 1}) + ' kg';
                 document.getElementById('sub-sum-avg-weight').innerText = avgWeightFromTable.toFixed(2) + ' kg/pcs';
@@ -2466,7 +2888,8 @@
             if (subPricingBasis === 'DETAIL_TABLE') {
                 subVendorBasePerPcs = detailTableTotalRp / qty;
                 const itemNames = subInvoiceItems.map(i => `${i.name} (${i.qty} pcs)`).join(', ');
-                subBaseDescText = `${subInvoiceItems.length} Item Nota [${itemNames}] • Total ${detailTableTotalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg`;
+                const extraNote = detailTableExtraRp > 0 ? ` + Biaya Ekstra ${formatRp(detailTableExtraRp)}` : '';
+                subBaseDescText = `${subInvoiceItems.length} Item [${itemNames}] • ${detailTableTotalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg${extraNote}`;
             } else if (subPricingBasis === 'INVOICE_TOTAL') {
                 const invTotal = getNum('subInvoiceTotalRp');
                 subVendorBasePerPcs = invTotal / qty;
@@ -2785,6 +3208,10 @@
                 document.getElementById('coreWeight').value = 1.2;
                 setFormattedVal('machiningPerPcs', 25000);
             }
+            syncIdentityFields('MAIN');
+            if (document.getElementById('subAlloyGrade')) {
+                document.getElementById('subAlloyGrade').value = document.getElementById('alloyGrade').value;
+            }
             onGradeChange();
             onSandSystemChange();
             syncYieldFromWeights();
@@ -2890,9 +3317,11 @@
         // Initialize on Window Load
         window.onload = function() {
             renderSubInvoiceTable();
+            renderSubCustomExtraList();
             renderProjectLaborList();
             renderConsumablesList();
             syncYieldFromWeights();
+            updateDynamicStepNumbers();
             renderHistoryTable();
         };
     </script>
