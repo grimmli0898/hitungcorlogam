@@ -47,6 +47,11 @@
         input[type="number"]::-webkit-outer-spin-button {
             opacity: 1;
         }
+        .section-disabled {
+            opacity: 0.45;
+            pointer-events: none;
+            filter: grayscale(40%);
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
@@ -170,7 +175,7 @@
                                 <div id="wrap-sub-full-rate">
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Harga Beli Cor Mentah</label>
                                     <div class="flex">
-                                        <input type="number" id="subRawPrice" value="16500" min="0" step="250" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-l-lg font-bold text-blue-900 bg-white">
+                                        <input type="text" inputmode="decimal" id="subRawPrice" value="16.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-l-lg font-bold text-blue-900 bg-white">
                                         <select id="subPricingBasis" onchange="calculateAll()" class="bg-blue-100 border border-l-0 border-blue-400 text-blue-900 text-xs font-bold px-2 rounded-r-lg">
                                             <option value="PER_KG_NET">/ kg bersih</option>
                                             <option value="PER_PCS">/ pcs</option>
@@ -183,13 +188,13 @@
                                         <option value="NET">Net</option>
                                     </select>
                                     <div class="flex items-center">
-                                        <input type="number" id="subTollFeePerKg" value="7500" min="0" step="250" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-400 rounded-l-lg font-bold text-purple-900 bg-white">
+                                        <input type="text" inputmode="decimal" id="subTollFeePerKg" value="7.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-400 rounded-l-lg font-bold text-purple-900 bg-white">
                                         <span class="bg-purple-100 border border-l-0 border-purple-400 px-2.5 py-2 text-xs font-semibold text-purple-900 rounded-r-lg">/kg bersih</span>
                                     </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1" title="Ongkos ambil barang cor mentah dari tempat subkon ke bengkel kita">Transport Ambil Coran (Rp/kg)</label>
-                                    <input type="number" id="subTransportPerKg" value="350" min="0" step="50" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
+                                    <input type="text" inputmode="decimal" id="subTransportPerKg" value="350" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
                                 </div>
                             </div>
 
@@ -245,7 +250,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Order (Pcs)</label>
-                                <input type="number" id="orderQty" value="100" min="1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none font-semibold">
+                                <input type="text" inputmode="numeric" id="orderQty" value="100" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none font-semibold">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1" title="Berat bersih produk setelah saluran potong">Berat Bersih / Net (kg/pcs)</label>
@@ -335,7 +340,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1" title="Inokulan, Nodulizer Mg, Slag Coagulant per kg cairan">Biaya Inokulan & Fluks (Rp/kg cair)</label>
-                                <input type="number" id="inoculantCostPerKg" value="450" min="0" step="50" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                                <input type="text" inputmode="decimal" id="inoculantCostPerKg" value="450" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1" title="Persentase saluran tuang yang berhasil diambil kembali untuk dilebur">Recovery Saluran Balikan (%)</label>
@@ -346,86 +351,107 @@
                 </div>
 
                 <!-- Section 3: Biaya Moulding, Cetakan, Inti & Pola -->
-                <div id="section-molding" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-opacity duration-300">
-                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
-                        <div class="flex items-center gap-2.5">
+                <div id="section-molding" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
+                        <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                            <input type="checkbox" id="chk-section-molding" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded border-slate-300 focus:ring-orange-500">
                             <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">3</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Biaya Moulding (Cetakan), Inti & Pola</h2>
-                        </div>
-                        <span id="badge-sec3-status" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full font-medium">Aktif di Semua Mode</span>
+                        </label>
+                        <span id="badge-sec3-status" class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full font-medium">Centang item yang diperlukan</span>
                     </div>
-                    <div class="p-5 space-y-4">
+                    <div id="body-section-molding" class="p-5 space-y-4">
                         <!-- In-House Sand Molding Inputs -->
                         <div id="molding-sand-inputs" class="space-y-4 pb-3 border-b border-slate-100">
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Sistem Pasir Cetak</label>
-                                    <select id="sandSystem" onchange="onSandSystemChange()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
-                                        <option value="GREENSAND">Greensand (Bentonit + Coal Dust)</option>
-                                        <option value="FURAN">Resin Furan / No-Bake</option>
-                                        <option value="CO2">Pasir CO2 / Waterglass</option>
-                                        <option value="SHELL">Shell Molding / Coated Sand</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1" title="Perbandingan berat pasir cetak terhadap berat logam tuang">Rasio Pasir : Logam Tuang</label>
-                                    <div class="flex items-center">
-                                        <input type="number" id="sandToMetalRatio" value="4.0" min="0.5" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-l-lg">
-                                        <span class="bg-slate-100 border border-l-0 border-slate-300 px-3 py-2 text-sm text-slate-600 rounded-r-lg font-medium">: 1</span>
+                            <div class="flex items-center justify-between bg-slate-100/80 px-3 py-2 rounded-lg">
+                                <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                                    <input type="checkbox" id="chk-sand-core" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded">
+                                    Aktifkan Biaya Pasir Cetak, Inti (Core) & Coating (In-House)
+                                </label>
+                            </div>
+                            <div id="wrap-sand-core-fields" class="space-y-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Sistem Pasir Cetak</label>
+                                        <select id="sandSystem" onchange="onSandSystemChange()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
+                                            <option value="GREENSAND">Greensand (Bentonit + Coal Dust)</option>
+                                            <option value="FURAN">Resin Furan / No-Bake</option>
+                                            <option value="CO2">Pasir CO2 / Waterglass</option>
+                                            <option value="SHELL">Shell Molding / Coated Sand</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1" title="Perbandingan berat pasir cetak terhadap berat logam tuang">Rasio Pasir : Logam Tuang</label>
+                                        <div class="flex items-center">
+                                            <input type="number" id="sandToMetalRatio" value="4.0" min="0.5" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-l-lg">
+                                            <span class="bg-slate-100 border border-l-0 border-slate-300 px-3 py-2 text-sm text-slate-600 rounded-r-lg font-medium">: 1</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Campuran Pasir (Rp/kg pasir)</label>
+                                        <input type="text" inputmode="decimal" id="sandCostPerKg" value="420" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Campuran Pasir (Rp/kg pasir)</label>
-                                    <input type="number" id="sandCostPerKg" value="420" min="0" step="10" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
-                                </div>
-                            </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Berat Inti / Core (kg/pcs)</label>
-                                    <input type="number" id="coreWeight" value="3.5" min="0" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Pembuatan Inti (Rp/kg inti)</label>
-                                    <input type="number" id="coreCostPerKg" value="2500" min="0" step="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Cat Cetakan / Mold Coating (Rp/pcs)</label>
-                                    <input type="number" id="coatingCostPerPcs" value="3500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Berat Inti / Core (kg/pcs)</label>
+                                        <input type="number" id="coreWeight" value="3.5" min="0" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Pembuatan Inti (Rp/kg inti)</label>
+                                        <input type="text" inputmode="decimal" id="coreCostPerKg" value="2.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Cat Cetakan / Mold Coating (Rp/pcs)</label>
+                                        <input type="text" inputmode="decimal" id="coatingCostPerPcs" value="3.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Moulding Work, Pattern Maintenance & Amortization (Active in both In-house & Subkon) -->
                         <div class="bg-amber-50/50 p-3.5 rounded-xl border border-amber-200/80 space-y-3">
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between border-b border-amber-200/60 pb-2">
                                 <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-box-open text-amber-600"></i> Biaya Moulding Box, Setting Cetakan & Pola (Pattern)
+                                    <i class="fa-solid fa-box-open text-amber-600"></i> Checklist Moulding Box, Setting & Pembuatan Pola Baru
                                 </span>
-                                <span class="text-[11px] text-amber-700">Dihitung baik Cor Sendiri maupun Subkon</span>
+                                <span class="text-[11px] text-amber-700">Matikan centang jika Repeat Order / Pola Sudah Ada</span>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Biaya jasa/upah moulding per pcs, sewa cetakan, atau biaya moulding tambahan di luar">Biaya Jasa / Operasional Moulding (Rp/pcs)</label>
-                                    <input type="number" id="mouldingFeePerPcs" value="8500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-amber-400 bg-white rounded-lg font-semibold text-slate-800">
+                                <div class="bg-white p-2.5 rounded-lg border border-amber-200">
+                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-1.5 cursor-pointer">
+                                        <input type="checkbox" id="chk-moulding-fee" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded">
+                                        Biaya Jasa / Operasional Moulding (Rp/pcs)
+                                    </label>
+                                    <input type="text" inputmode="decimal" id="mouldingFeePerPcs" value="8.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-1.5 text-sm border border-amber-400 bg-white rounded-lg font-semibold text-slate-800">
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Biaya dempul pola, modifikasi gating, wax, release agent, atau perbaikan pola">Perawatan / Setting / Modifikasi Pola (Rp/pcs)</label>
-                                    <input type="number" id="patternMaintPerPcs" value="2500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 bg-white rounded-lg">
+                                <div class="bg-white p-2.5 rounded-lg border border-amber-200">
+                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-1.5 cursor-pointer">
+                                        <input type="checkbox" id="chk-pattern-maint" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded">
+                                        Perawatan / Setting / Modifikasi Pola (Rp/pcs)
+                                    </label>
+                                    <input type="text" inputmode="decimal" id="patternMaintPerPcs" value="2.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-1.5 text-sm border border-slate-300 bg-white rounded-lg">
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Biaya Buat Pola / Mould Baru (Total Rp)</label>
-                                    <input type="number" id="patternTotalCost" value="2500000" min="0" step="100000" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 bg-white rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Metode Pembebanan Biaya Pola Baru</label>
-                                    <select id="patternAmortType" onchange="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white">
-                                        <option value="AMORTIZE">Amortisasi (Bagi rata ke Jumlah Order saat ini)</option>
-                                        <option value="SEPARATE">Tagih Terpisah / Pola Sudah Ada (Rp 0 di HPP)</option>
-                                    </select>
+                            <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-2.5">
+                                <label class="flex items-center gap-2 text-xs font-bold text-amber-950 cursor-pointer">
+                                    <input type="checkbox" id="chk-new-pattern" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded">
+                                    Buat Pola / Mould Baru (Uncheck bila Pemesanan Kedua / Repeat Order)
+                                </label>
+                                <div id="wrap-new-pattern-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Buat Pola / Mould Baru (Total Rp)</label>
+                                        <input type="text" inputmode="decimal" id="patternTotalCost" value="2.500.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-1.5 text-sm border border-slate-300 bg-white rounded-lg font-semibold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Metode Pembebanan Biaya Pola Baru</label>
+                                        <select id="patternAmortType" onchange="calculateAll()" class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white">
+                                            <option value="AMORTIZE">Amortisasi (Bagi rata ke Jumlah Order saat ini)</option>
+                                            <option value="SEPARATE">Tagih Terpisah di Luar HPP Unit</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -433,82 +459,160 @@
                 </div>
 
                 <!-- Section 4: Energi Peleburan, Alat Finishing (Gerinda/Cat), Machining & QC -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
-                        <div class="flex items-center gap-2.5">
+                <div id="section-finishing-main" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
+                        <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                            <input type="checkbox" id="chk-section-finishing" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded border-slate-300 focus:ring-orange-500">
                             <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">4</span>
-                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec4">Peleburan, Alat Finishing, Pengecatan & Machining</h2>
-                        </div>
-                        <span id="badge-sec4-status" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full hidden">Fokus In-House Finishing</span>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec4">Proses Internal Kita: Finishing, Machining & QC</h2>
+                        </label>
+                        <span id="badge-sec4-status" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">Turunan bisa di-checklist</span>
                     </div>
-                    <div class="p-5 space-y-5">
+                    <div id="body-section-finishing" class="p-5 space-y-5">
                         <!-- Melting Energy & Refractory (Hidden when Subkon Full/Toll) -->
                         <div id="melting-energy-inputs" class="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-200">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Konsumsi Listrik Lebur (kWh/ton cair)</label>
-                                <input type="number" id="kwhPerTon" value="620" min="100" step="10" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                <input type="text" inputmode="decimal" id="kwhPerTon" value="620" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Refraktori, Lining & Termokopel (Rp/kg cair)</label>
-                                <input type="number" id="refractoryPerKg" value="350" min="0" step="25" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                <input type="text" inputmode="decimal" id="refractoryPerKg" value="350" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Upah Tim Cetak & Lebur (Rp/kg cair)</label>
-                                <input type="number" id="laborMeltingPerKg" value="1200" min="0" step="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                <input type="text" inputmode="decimal" id="laborMeltingPerKg" value="1.200" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                             </div>
                         </div>
 
-                        <!-- A. Tenaga Kerja & Jasa Finishing Dasar -->
-                        <div>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-purple-800 mb-2.5 flex items-center gap-1.5">
-                                <i class="fa-solid fa-user-gear text-purple-600"></i> A. Upah Kerja Finishing, Bubut (Machining) & QC
-                            </h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1" title="Upah tukang gerinda, potong saluran, dan shotblasting per kg bersih">Upah Gerinda & Fettling (Rp/kg)</label>
-                                    <input type="number" id="fettlingPerKg" value="800" min="0" step="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg font-semibold">
+                        <!-- A. Tenaga Kerja & Jasa Finishing Dasar (Per Unit / Kg vs Harian) -->
+                        <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-4">
+                            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200 pb-2.5">
+                                <label class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-purple-900 cursor-pointer">
+                                    <input type="checkbox" id="chk-sub-labor" checked onchange="calculateAll()" class="w-4 h-4 text-purple-600 rounded">
+                                    <i class="fa-solid fa-user-gear text-purple-600"></i> A. Upah Kerja Finishing, Bubut (Machining) & QC
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[11px] font-semibold text-slate-500">Metode Hitung Upah:</span>
+                                    <select id="laborCalcMode" onchange="onLaborModeChange()" class="text-xs font-bold bg-white border border-purple-300 text-purple-900 px-2.5 py-1 rounded-lg focus:outline-none">
+                                        <option value="UNIT">Borongan per Kg / per Pcs</option>
+                                        <option value="DAILY">Upah Harian (Jumlah Pekerja × Hari)</option>
+                                    </select>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Machining / Bubut (Rp/pcs)</label>
-                                    <input type="number" id="machiningPerPcs" value="45000" min="0" step="5000" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-emerald-400 bg-emerald-50/20 rounded-lg font-semibold">
+                            </div>
+
+                            <!-- Mode 1: Unit / Piece Rate -->
+                            <div id="labor-unit-panel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 mb-1.5 cursor-pointer">
+                                        <input type="checkbox" id="chk-fettling" checked onchange="calculateAll()" class="w-3.5 h-3.5 text-purple-600 rounded">
+                                        Gerinda & Fettling (Rp/kg)
+                                    </label>
+                                    <input type="text" inputmode="decimal" id="fettlingPerKg" value="800" oninput="formatThousandInput(this); calculateAll()" class="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg font-semibold">
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Heat Treatment (Rp/kg bersih)</label>
-                                    <input type="number" id="heatTreatPerKg" value="0" min="0" step="100" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 mb-1.5 cursor-pointer">
+                                        <input type="checkbox" id="chk-machining" checked onchange="calculateAll()" class="w-3.5 h-3.5 text-purple-600 rounded">
+                                        Machining / Bubut (Rp/pcs)
+                                    </label>
+                                    <input type="text" inputmode="decimal" id="machiningPerPcs" value="45.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-2.5 py-1.5 text-sm border border-emerald-400 bg-emerald-50/20 rounded-lg font-semibold">
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1" title="Inspeksi dimensi, uji kekerasan, spektro">Biaya QC & Pengujian (Rp/pcs)</label>
-                                    <input type="number" id="qcPaintingPerPcs" value="3500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 mb-1.5 cursor-pointer">
+                                        <input type="checkbox" id="chk-heattreat" onchange="calculateAll()" class="w-3.5 h-3.5 text-purple-600 rounded">
+                                        Heat Treatment (Rp/kg)
+                                    </label>
+                                    <input type="text" inputmode="decimal" id="heatTreatPerKg" value="0" oninput="formatThousandInput(this); calculateAll()" class="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg">
+                                </div>
+                                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 mb-1.5 cursor-pointer">
+                                        <input type="checkbox" id="chk-qc" checked onchange="calculateAll()" class="w-3.5 h-3.5 text-purple-600 rounded">
+                                        QC & Pengujian (Rp/pcs)
+                                    </label>
+                                    <input type="text" inputmode="decimal" id="qcPaintingPerPcs" value="3.500" oninput="formatThousandInput(this); calculateAll()" class="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg">
+                                </div>
+                            </div>
+
+                            <!-- Mode 2: Daily Rate (Upah Harian) -->
+                            <div id="labor-daily-panel" class="hidden space-y-2.5">
+                                <div class="text-[11px] text-slate-600 bg-purple-100/60 border border-purple-200 px-3 py-2 rounded-lg flex justify-between items-center">
+                                    <span>Total Upah Harian Proyek dibagi rata ke <b id="lbl-daily-qty">100</b> pcs order.</span>
+                                    <span class="font-bold text-purple-900" id="lbl-daily-total-summary">Total Upah: Rp 0 (Rp 0 /pcs)</span>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-xs text-left border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-slate-200 text-slate-500 uppercase text-[11px]">
+                                                <th class="py-1.5 px-2">Aktif</th>
+                                                <th class="py-1.5 px-2">Divisi / Pekerjaan</th>
+                                                <th class="py-1.5 px-2 text-center w-20">Jml Orang</th>
+                                                <th class="py-1.5 px-2 text-center w-20">Jml Hari</th>
+                                                <th class="py-1.5 px-2 text-right w-36">Upah / Orang / Hari</th>
+                                                <th class="py-1.5 px-2 text-right">Total Proyek</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-200 bg-white">
+                                            <tr>
+                                                <td class="py-2 px-2 text-center"><input type="checkbox" id="chk-day-fett" checked onchange="calculateAll()" class="w-4 h-4 text-purple-600 rounded"></td>
+                                                <td class="py-2 px-2 font-semibold text-slate-700">Tim Gerinda, Fettling & Dempul/Cat</td>
+                                                <td class="py-2 px-2"><input type="number" id="dayFettWorkers" value="2" min="1" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                                <td class="py-2 px-2"><input type="number" id="dayFettDays" value="5" min="0.5" step="0.5" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                                <td class="py-2 px-2"><input type="text" inputmode="decimal" id="dayFettRate" value="150.000" oninput="formatThousandInput(this); calculateAll()" class="w-full text-right px-2 py-1 border border-slate-300 rounded font-mono font-semibold"></td>
+                                                <td class="py-2 px-2 text-right font-mono font-bold text-slate-800" id="tot-day-fett">Rp 1.500.000</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="py-2 px-2 text-center"><input type="checkbox" id="chk-day-mach" checked onchange="calculateAll()" class="w-4 h-4 text-purple-600 rounded"></td>
+                                                <td class="py-2 px-2 font-semibold text-slate-700">Operator Bubut / Machining CNC</td>
+                                                <td class="py-2 px-2"><input type="number" id="dayMachWorkers" value="2" min="1" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                                <td class="py-2 px-2"><input type="number" id="dayMachDays" value="8" min="0.5" step="0.5" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                                <td class="py-2 px-2"><input type="text" inputmode="decimal" id="dayMachRate" value="200.000" oninput="formatThousandInput(this); calculateAll()" class="w-full text-right px-2 py-1 border border-slate-300 rounded font-mono font-semibold"></td>
+                                                <td class="py-2 px-2 text-right font-mono font-bold text-slate-800" id="tot-day-mach">Rp 3.200.000</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="py-2 px-2 text-center"><input type="checkbox" id="chk-day-qc" checked onchange="calculateAll()" class="w-4 h-4 text-purple-600 rounded"></td>
+                                                <td class="py-2 px-2 font-semibold text-slate-700">Inspektor QC, Uji & Packing</td>
+                                                <td class="py-2 px-2"><input type="number" id="dayQcWorkers" value="1" min="1" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                                <td class="py-2 px-2"><input type="number" id="dayQcDays" value="2" min="0.5" step="0.5" oninput="calculateAll()" class="w-full text-center py-1 border border-slate-300 rounded font-semibold"></td>
+                                                <td class="py-2 px-2"><input type="text" inputmode="decimal" id="dayQcRate" value="175.000" oninput="formatThousandInput(this); calculateAll()" class="w-full text-right px-2 py-1 border border-slate-300 rounded font-mono font-semibold"></td>
+                                                <td class="py-2 px-2 text-right font-mono font-bold text-slate-800" id="tot-day-qc">Rp 350.000</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- B. Alat & Consumables Finishing (Batu Gerinda, Dempul, Pahat, Cat & Thinner) -->
+                        <!-- B. Alat & Consumables Finishing (Bisa Per 1x Projek atau Per Pcs + Custom Dynamic Rows) -->
                         <div class="bg-purple-50/60 p-4 rounded-xl border border-purple-200 space-y-3">
-                            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-purple-200/80 pb-2">
-                                <span class="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-purple-200/80 pb-2.5">
+                                <label class="flex items-center gap-2 text-xs font-bold text-purple-950 cursor-pointer">
+                                    <input type="checkbox" id="chk-sub-consumables" checked onchange="calculateAll()" class="w-4 h-4 text-purple-600 rounded">
                                     <i class="fa-solid fa-toolbox text-purple-600"></i> B. Belanja Alat Bantu Finishing, Batu Gerinda, Dempul & Bahan Cat
-                                </span>
-                                <span class="text-[11px] font-bold text-purple-800 bg-purple-100 px-2.5 py-0.5 rounded-full" id="subtotal-consumables-badge">Subtotal Alat & Cat: Rp 18.500 /pcs</span>
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <select id="consumableBasisMode" onchange="calculateAll()" class="text-xs font-bold bg-white border border-purple-300 text-purple-900 px-2.5 py-1 rounded-lg focus:outline-none">
+                                        <option value="PER_PROJECT">Belanja 1x Projek / Batch (Dibagi ke Qty Order)</option>
+                                        <option value="PER_PCS">Dihitung per Pcs Produk</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Batu gerinda potong (cutting wheel), batu gerinda poles, flap disc, amplas, mata bor/kikir">Batu Gerinda & Amplas (Rp/pcs)</label>
-                                    <input type="number" id="grindingDiscPerPcs" value="4500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-300 bg-white rounded-lg font-semibold text-slate-800">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Insert carbide bubut, mata tap/senai, cairan coolant, oli mesin, majun, sarung tangan">Pahat Bubut, Coolant & APD (Rp/pcs)</label>
-                                    <input type="number" id="toolingConsumablePerPcs" value="5000" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-300 bg-white rounded-lg font-semibold text-slate-800">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Dempul besi/epoxy (putty), kawat las koreksi, sandblasting grit/steel shot">Dempul Cor & Kawat Las (Rp/pcs)</label>
-                                    <input type="number" id="puttyWeldingPerPcs" value="2500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-300 bg-white rounded-lg font-semibold text-slate-800">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1" title="Cat primer epoxy/zinc chromate, cat warna akhir (top coat), thinner, kuas/semprot">Bahan Cat Primer, Topcoat & Thinner (Rp/pcs)</label>
-                                    <input type="number" id="paintMaterialPerPcs" value="6500" min="0" step="500" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-purple-300 bg-white rounded-lg font-semibold text-slate-800">
-                                </div>
+                            <div class="flex flex-wrap justify-between items-center text-[11px] bg-white/80 px-3 py-2 rounded-lg border border-purple-200/70">
+                                <span id="consumable-mode-hint" class="text-slate-600 font-medium">Masukkan total belanja alat/bahan untuk <b>1 kali projek penuh</b>. Sistem otomatis membagi ke jumlah pcs order.</span>
+                                <span class="font-bold text-purple-900" id="subtotal-consumables-badge">Total: Rp 0 (Rp 0 /pcs)</span>
+                            </div>
+
+                            <!-- Dynamic List of Consumable Items -->
+                            <div id="consumables-list-container" class="space-y-2">
+                                <!-- Rendered via JS -->
+                            </div>
+
+                            <!-- Button to Add Custom Consumable Cost -->
+                            <div class="pt-1 flex justify-between items-center">
+                                <button type="button" onclick="addConsumableItem()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-plus"></i> Tambah Biaya Alat / Consumable Lainnya
+                                </button>
+                                <span class="text-[11px] text-slate-500">Centang item yang dipakai saja</span>
                             </div>
                         </div>
                     </div>
@@ -533,7 +637,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Packing & Kirim (Rp/kg)</label>
-                            <input type="number" id="logisticsPerKg" value="400" min="0" step="50" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                            <input type="text" inputmode="decimal" id="logisticsPerKg" value="400" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Target Margin Profit (%)</label>
@@ -743,27 +847,27 @@
                         <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Pig Iron / Ingot Utama (Rp/kg)</label>
-                                <input type="number" id="mst-pig" value="9500" step="100" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-pig" value="9.500" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Scrap Baja / Besi Beli (Rp/kg)</label>
-                                <input type="number" id="mst-scrap" value="7200" step="100" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-scrap" value="7.200" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Nilai Scrap Balikan Internal / Return (Rp/kg)</label>
-                                <input type="number" id="mst-return" value="6500" step="100" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-return" value="6.500" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Ferroalloys Rata-rata - FeSi/FeMn (Rp/kg)</label>
-                                <input type="number" id="mst-alloy" value="28500" step="500" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-alloy" value="28.500" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Ingot Aluminium ADC12 (Rp/kg)</label>
-                                <input type="number" id="mst-al-ingot" value="38000" step="500" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-al-ingot" value="38.000" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Ingot Bronze / Tembaga Paduan (Rp/kg)</label>
-                                <input type="number" id="mst-bronze" value="115000" step="1000" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-bronze" value="115.000" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                         </div>
                     </div>
@@ -776,19 +880,19 @@
                         <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Tarif Listrik Industri PLN Rata-rata (Rp/kWh)</label>
-                                <input type="number" id="mst-kwh-rate" value="1450" step="50" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-kwh-rate" value="1.450" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Biaya Pasir Greensand Recycle (Rp/kg pasir)</label>
-                                <input type="number" id="mst-sand-green" value="420" step="20" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-sand-green" value="420" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Biaya Pasir Resin Furan / No-Bake (Rp/kg pasir)</label>
-                                <input type="number" id="mst-sand-furan" value="1850" step="50" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-sand-furan" value="1.850" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Biaya Pasir CO2 / Waterglass (Rp/kg pasir)</label>
-                                <input type="number" id="mst-sand-co2" value="1150" step="50" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
+                                <input type="text" inputmode="decimal" id="mst-sand-co2" value="1.150" oninput="formatThousandInput(this)" class="w-36 px-3 py-1.5 text-sm border border-slate-300 rounded-lg text-right font-mono font-semibold">
                             </div>
                             <div class="flex justify-between items-center">
                                 <label class="text-xs font-semibold text-slate-700">Nama Perusahaan Pengecoran Anda</label>
@@ -943,6 +1047,140 @@
         // Current Production Mode ('INHOUSE' | 'SUB_FULL' | 'SUB_TOLL')
         let currentProdMode = 'INHOUSE';
 
+        // Customizable Consumables & Finishing Tools List
+        let consumableItems = [
+            { id: 1, checked: true, name: 'Batu Gerinda Potong, Poles, Flap Disc & Amplas', costProject: 450000, costPcs: 4500 },
+            { id: 2, checked: true, name: 'Pahat Bubut (Insert Carbide), Mata Bor/Tap, Coolant & APD', costProject: 500000, costPcs: 5000 },
+            { id: 3, checked: true, name: 'Dempul Besi/Cor (Putty) & Kawat Las Koreksi', costProject: 250000, costPcs: 2500 },
+            { id: 4, checked: true, name: 'Bahan Cat Primer Anti-Karat, Cat Topcoat & Thinner', costProject: 650000, costPcs: 6500 }
+        ];
+
+        // Helper: Parse Indonesian formatted number ("2.500.000" -> 2500000)
+        function getNum(id) {
+            const el = document.getElementById(id);
+            if (!el) return 0;
+            const raw = String(el.value).replace(/\./g, '').replace(',', '.');
+            const parsed = parseFloat(raw);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        // Helper: Set formatted thousand value into an input
+        function setFormattedVal(id, numVal) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const n = Math.round(Number(numVal) || 0);
+            el.value = n.toLocaleString('id-ID');
+        }
+
+        // Auto-format input with thousand separator (.) while typing
+        function formatThousandInput(el) {
+            const cursorPos = el.selectionStart;
+            const oldLen = el.value.length;
+            let clean = el.value.replace(/[^0-9]/g, '');
+            if (clean === '') {
+                el.value = '';
+                return;
+            }
+            const formatted = parseInt(clean, 10).toLocaleString('id-ID');
+            el.value = formatted;
+            const newLen = el.value.length;
+            const newCursor = Math.max(0, cursorPos + (newLen - oldLen));
+            try {
+                el.setSelectionRange(newCursor, newCursor);
+            } catch (e) {}
+        }
+
+        // Render Dynamic Consumables List (Section 4B)
+        function renderConsumablesList() {
+            const container = document.getElementById('consumables-list-container');
+            if (!container) return;
+            const mode = document.getElementById('consumableBasisMode').value; // 'PER_PROJECT' | 'PER_PCS'
+            container.innerHTML = '';
+
+            consumableItems.forEach((item, index) => {
+                const activeVal = mode === 'PER_PROJECT' ? item.costProject : item.costPcs;
+                const unitLabel = mode === 'PER_PROJECT' ? 'Rp / Projek' : 'Rp / Pcs';
+                const row = document.createElement('div');
+                row.className = `flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2.5 rounded-lg border ${item.checked ? 'border-purple-300' : 'border-slate-200 opacity-60'} transition`;
+                row.innerHTML = `
+                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleConsumableItem(${index}, this.checked)" class="w-4 h-4 text-purple-600 rounded cursor-pointer shrink-0">
+                    <input type="text" value="${item.name}" oninput="updateConsumableName(${index}, this.value)" placeholder="Nama biaya alat / bahan..." class="w-full sm:flex-1 px-2.5 py-1 text-xs font-semibold text-slate-800 border border-slate-200 rounded focus:outline-none focus:border-purple-500">
+                    <div class="flex items-center w-full sm:w-52 shrink-0">
+                        <span class="bg-purple-100 border border-r-0 border-purple-300 text-purple-900 text-[11px] font-bold px-2 py-1 rounded-l">Rp</span>
+                        <input type="text" inputmode="numeric" value="${Math.round(activeVal).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateConsumableCost(${index}, this.value)" class="w-full px-2.5 py-1 text-xs font-mono font-bold text-right border border-purple-300 text-purple-950 focus:outline-none">
+                        <span class="bg-slate-100 border border-l-0 border-purple-300 text-slate-600 text-[10px] font-semibold px-2 py-1 rounded-r whitespace-nowrap">${unitLabel}</span>
+                    </div>
+                    <button type="button" onclick="removeConsumableItem(${index})" class="text-slate-400 hover:text-rose-600 px-1.5 py-1 transition" title="Hapus item">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function toggleConsumableItem(idx, isChecked) {
+            if (consumableItems[idx]) {
+                consumableItems[idx].checked = isChecked;
+                renderConsumablesList();
+                calculateAll();
+            }
+        }
+
+        function updateConsumableName(idx, val) {
+            if (consumableItems[idx]) {
+                consumableItems[idx].name = val;
+            }
+        }
+
+        function updateConsumableCost(idx, rawStr) {
+            if (!consumableItems[idx]) return;
+            const mode = document.getElementById('consumableBasisMode').value;
+            const num = parseFloat(String(rawStr).replace(/\./g, '')) || 0;
+            const qty = Math.max(1, getNum('orderQty'));
+            if (mode === 'PER_PROJECT') {
+                consumableItems[idx].costProject = num;
+                consumableItems[idx].costPcs = Math.round(num / qty);
+            } else {
+                consumableItems[idx].costPcs = num;
+                consumableItems[idx].costProject = num * qty;
+            }
+            calculateAll(true); // skip re-rendering input list while typing
+        }
+
+        function addConsumableItem() {
+            const qty = Math.max(1, getNum('orderQty'));
+            consumableItems.push({
+                id: Date.now(),
+                checked: true,
+                name: 'Biaya Alat / Bahan Tambahan Baru',
+                costProject: 200000,
+                costPcs: Math.round(200000 / qty)
+            });
+            renderConsumablesList();
+            calculateAll();
+            showToast('Baris biaya alat/bahan baru ditambahkan!');
+        }
+
+        function removeConsumableItem(idx) {
+            consumableItems.splice(idx, 1);
+            renderConsumablesList();
+            calculateAll();
+        }
+
+        function onLaborModeChange() {
+            const mode = document.getElementById('laborCalcMode').value;
+            const unitPanel = document.getElementById('labor-unit-panel');
+            const dailyPanel = document.getElementById('labor-daily-panel');
+            if (mode === 'DAILY') {
+                unitPanel.classList.add('hidden');
+                dailyPanel.classList.remove('hidden');
+            } else {
+                unitPanel.classList.remove('hidden');
+                dailyPanel.classList.add('hidden');
+            }
+            calculateAll();
+        }
+
         // Master State & History
         let calculationHistory = [
             {
@@ -990,7 +1228,6 @@
             const moldingSandInputs = document.getElementById('molding-sand-inputs');
             const meltingEnergyInputs = document.getElementById('melting-energy-inputs');
             const pill = document.getElementById('mode-active-pill');
-            const badgeSec4 = document.getElementById('badge-sec4-status');
 
             if (mode === 'INHOUSE') {
                 btnInhouse.className = 'text-left p-3 rounded-xl border-2 border-orange-600 bg-orange-50/60 transition flex flex-col justify-between';
@@ -999,8 +1236,7 @@
                 secRaw.classList.remove('hidden');
                 moldingSandInputs.classList.remove('hidden');
                 meltingEnergyInputs.classList.remove('hidden');
-                badgeSec4.classList.add('hidden');
-                document.getElementById('title-sec4').innerText = 'Peleburan, Finishing, Machining & QC';
+                document.getElementById('title-sec4').innerText = 'Peleburan & Proses Internal: Finishing, Machining & QC';
             } else if (mode === 'SUB_FULL') {
                 btnSubFull.className = 'text-left p-3 rounded-xl border-2 border-blue-600 bg-blue-50/60 transition flex flex-col justify-between';
                 pill.innerText = 'Subkon Cor Luar + Finishing Internal';
@@ -1009,11 +1245,9 @@
                 wrapToll.classList.add('hidden');
                 document.getElementById('subkon-type-desc').innerText = 'Skema: Beli Coran Mentah dari Vendor, Finishing & Bubut di Tempat Kita';
 
-                // Hide raw material, sand & melting energy inputs because vendor handles them
                 secRaw.classList.add('hidden');
                 moldingSandInputs.classList.add('hidden');
                 meltingEnergyInputs.classList.add('hidden');
-                badgeSec4.classList.remove('hidden');
                 document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
             } else if (mode === 'SUB_TOLL') {
                 btnSubToll.className = 'text-left p-3 rounded-xl border-2 border-purple-600 bg-purple-50/60 transition flex flex-col justify-between';
@@ -1023,11 +1257,9 @@
                 wrapToll.classList.remove('hidden');
                 document.getElementById('subkon-type-desc').innerText = 'Skema: Bahan Baku Logam dari Kita, Bayar Jasa Cetak & Lebur ke Vendor';
 
-                // Keep Raw Material visible, hide sand & melting energy
                 secRaw.classList.remove('hidden');
                 moldingSandInputs.classList.add('hidden');
                 meltingEnergyInputs.classList.add('hidden');
-                badgeSec4.classList.remove('hidden');
                 document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
             }
 
@@ -1037,11 +1269,11 @@
         function onSubConditionChange() {
             const cond = document.getElementById('subCondition').value;
             if (cond === 'AS_CAST') {
-                document.getElementById('fettlingPerKg').value = 600; // Hanya gerinda halus/rapikan
+                setFormattedVal('fettlingPerKg', 600);
             } else if (cond === 'FETTLED') {
-                document.getElementById('fettlingPerKg').value = 150; // Sudah bersih dari subkon, hanya cek/touchup
+                setFormattedVal('fettlingPerKg', 150);
             } else if (cond === 'RAW_GATING') {
-                document.getElementById('fettlingPerKg').value = 1200; // Potong saluran & gerinda penuh di tempat kita
+                setFormattedVal('fettlingPerKg', 1200);
             }
             calculateAll();
         }
@@ -1111,36 +1343,36 @@
                 document.getElementById('mixScrap').value = 45;
                 document.getElementById('mixReturn').value = 27;
                 document.getElementById('mixAlloy').value = 3;
-                document.getElementById('inoculantCostPerKg').value = 450;
-                document.getElementById('kwhPerTon').value = 620;
+                setFormattedVal('inoculantCostPerKg', 450);
+                setFormattedVal('kwhPerTon', 620);
             } else if (grade === 'FCD500') {
                 document.getElementById('mixPig').value = 40;
                 document.getElementById('mixScrap').value = 30;
                 document.getElementById('mixReturn').value = 25;
                 document.getElementById('mixAlloy').value = 5;
-                document.getElementById('inoculantCostPerKg').value = 1850; // Nodulizer Mg + Inoculant
-                document.getElementById('kwhPerTon').value = 680;
+                setFormattedVal('inoculantCostPerKg', 1850);
+                setFormattedVal('kwhPerTon', 680);
             } else if (grade === 'SS400') {
                 document.getElementById('mixPig').value = 10;
                 document.getElementById('mixScrap').value = 60;
                 document.getElementById('mixReturn').value = 25;
                 document.getElementById('mixAlloy').value = 5;
-                document.getElementById('inoculantCostPerKg').value = 950;
-                document.getElementById('kwhPerTon').value = 750;
+                setFormattedVal('inoculantCostPerKg', 950);
+                setFormattedVal('kwhPerTon', 750);
             } else if (grade === 'AL_ADC12') {
                 document.getElementById('mixPig').value = 70;
                 document.getElementById('mixScrap').value = 10;
                 document.getElementById('mixReturn').value = 20;
                 document.getElementById('mixAlloy').value = 0;
-                document.getElementById('inoculantCostPerKg').value = 600; // Degasser & Flux
-                document.getElementById('kwhPerTon').value = 480;
+                setFormattedVal('inoculantCostPerKg', 600);
+                setFormattedVal('kwhPerTon', 480);
             } else if (grade === 'BRONZE') {
                 document.getElementById('mixPig').value = 80;
                 document.getElementById('mixScrap').value = 0;
                 document.getElementById('mixReturn').value = 20;
                 document.getElementById('mixAlloy').value = 0;
-                document.getElementById('inoculantCostPerKg').value = 800;
-                document.getElementById('kwhPerTon').value = 520;
+                setFormattedVal('inoculantCostPerKg', 800);
+                setFormattedVal('kwhPerTon', 520);
             }
             calculateAll();
         }
@@ -1149,13 +1381,13 @@
         function onSandSystemChange() {
             const sys = document.getElementById('sandSystem').value;
             if (sys === 'GREENSAND') {
-                document.getElementById('sandCostPerKg').value = document.getElementById('mst-sand-green').value;
+                setFormattedVal('sandCostPerKg', getNum('mst-sand-green'));
             } else if (sys === 'FURAN') {
-                document.getElementById('sandCostPerKg').value = document.getElementById('mst-sand-furan').value;
+                setFormattedVal('sandCostPerKg', getNum('mst-sand-furan'));
             } else if (sys === 'CO2') {
-                document.getElementById('sandCostPerKg').value = document.getElementById('mst-sand-co2').value;
+                setFormattedVal('sandCostPerKg', getNum('mst-sand-co2'));
             } else {
-                document.getElementById('sandCostPerKg').value = 2400;
+                setFormattedVal('sandCostPerKg', 2400);
             }
             calculateAll();
         }
@@ -1169,26 +1401,43 @@
         }
 
         // Main Calculation Function
-        function calculateAll() {
+        function calculateAll(skipConsumableRender = false) {
+            if (!skipConsumableRender) {
+                renderConsumablesList();
+            }
+
             // 1. Read Weights & Order Qty
-            const qty = Math.max(1, parseFloat(document.getElementById('orderQty').value) || 1);
+            const qty = Math.max(1, getNum('orderQty') || 1);
             const netW = Math.max(0.1, parseFloat(document.getElementById('netWeight').value) || 1);
             const grossW = Math.max(netW, parseFloat(document.getElementById('grossWeight').value) || netW);
             const gatingW = Math.max(0, grossW - netW);
 
+            // Visual toggle states for Sections 3 & 4
+            const isMoldingSectionActive = document.getElementById('chk-section-molding').checked;
+            document.getElementById('body-section-molding').classList.toggle('section-disabled', !isMoldingSectionActive);
+
+            const isSandCoreActive = document.getElementById('chk-sand-core').checked;
+            document.getElementById('wrap-sand-core-fields').classList.toggle('section-disabled', !isSandCoreActive);
+
+            const isNewPatternActive = document.getElementById('chk-new-pattern').checked;
+            document.getElementById('wrap-new-pattern-fields').classList.toggle('section-disabled', !isNewPatternActive);
+
+            const isFinishingSectionActive = document.getElementById('chk-section-finishing').checked;
+            document.getElementById('body-section-finishing').classList.toggle('section-disabled', !isFinishingSectionActive);
+
             // 2. Read Master Prices based on selected grade
             const grade = document.getElementById('alloyGrade').value;
-            let pricePig = parseFloat(document.getElementById('mst-pig').value) || 9500;
-            let priceScrap = parseFloat(document.getElementById('mst-scrap').value) || 7200;
-            let priceReturn = parseFloat(document.getElementById('mst-return').value) || 6500;
-            let priceAlloy = parseFloat(document.getElementById('mst-alloy').value) || 28500;
+            let pricePig = getNum('mst-pig') || 9500;
+            let priceScrap = getNum('mst-scrap') || 7200;
+            let priceReturn = getNum('mst-return') || 6500;
+            let priceAlloy = getNum('mst-alloy') || 28500;
 
             if (grade === 'AL_ADC12') {
-                pricePig = parseFloat(document.getElementById('mst-al-ingot').value) || 38000;
+                pricePig = getNum('mst-al-ingot') || 38000;
                 priceScrap = pricePig * 0.78;
                 priceReturn = pricePig * 0.75;
             } else if (grade === 'BRONZE') {
-                pricePig = parseFloat(document.getElementById('mst-bronze').value) || 115000;
+                pricePig = getNum('mst-bronze') || 115000;
                 priceScrap = pricePig * 0.82;
                 priceReturn = pricePig * 0.80;
             }
@@ -1223,7 +1472,7 @@
 
             // 4. Liquid Metal, Melting Loss & Scrap Return Credit
             const meltingLossPct = parseFloat(document.getElementById('meltingLossPct').value) || 0;
-            const inoculantCostPerKg = parseFloat(document.getElementById('inoculantCostPerKg').value) || 0;
+            const inoculantCostPerKg = getNum('inoculantCostPerKg');
             const scrapRecoveryPct = parseFloat(document.getElementById('scrapRecoveryPct').value) || 0;
 
             const requiredMeltWeight = grossW * (1 + (meltingLossPct / 100));
@@ -1234,57 +1483,133 @@
             const scrapCreditValue = recoveredScrapWeight * priceReturn;
             const netMaterialCost = Math.max(0, grossMetalCost - scrapCreditValue);
 
-            // 5. Molding, Core, Moulding Box Fee & Pattern Cost
+            // 5. Molding, Core, Moulding Box Fee & Pattern Cost (With Checklists)
             const sandRatio = parseFloat(document.getElementById('sandToMetalRatio').value) || 0;
-            const sandCostPerKg = parseFloat(document.getElementById('sandCostPerKg').value) || 0;
+            const sandCostPerKg = getNum('sandCostPerKg');
             const coreW = parseFloat(document.getElementById('coreWeight').value) || 0;
-            const coreCostPerKg = parseFloat(document.getElementById('coreCostPerKg').value) || 0;
-            const coatingCost = parseFloat(document.getElementById('coatingCostPerPcs').value) || 0;
-            const mouldingFeePerPcs = parseFloat(document.getElementById('mouldingFeePerPcs').value) || 0;
-            const patternMaintPerPcs = parseFloat(document.getElementById('patternMaintPerPcs').value) || 0;
-            const patternTotal = parseFloat(document.getElementById('patternTotalCost').value) || 0;
-            const patternType = document.getElementById('patternAmortType').value;
+            const coreCostPerKg = getNum('coreCostPerKg');
+            const coatingCost = getNum('coatingCostPerPcs');
 
             const sandWeightPerPcs = grossW * sandRatio;
-            const moldingSandCost = sandWeightPerPcs * sandCostPerKg;
-            const coreTotalCost = coreW * coreCostPerKg;
-            const patternAmortCost = (patternType === 'AMORTIZE') ? (patternTotal / qty) : 0;
+            let sandAndCoreTotal = 0;
+            if (isMoldingSectionActive && isSandCoreActive) {
+                sandAndCoreTotal = (sandWeightPerPcs * sandCostPerKg) + (coreW * coreCostPerKg) + coatingCost;
+            }
 
-            // Moulding & Pattern cost that applies even when outsourcing (if we manage/pay moulding & pattern)
+            let mouldingFeePerPcs = 0;
+            let patternMaintPerPcs = 0;
+            let patternAmortCost = 0;
+
+            if (isMoldingSectionActive) {
+                if (document.getElementById('chk-moulding-fee').checked) {
+                    mouldingFeePerPcs = getNum('mouldingFeePerPcs');
+                }
+                if (document.getElementById('chk-pattern-maint').checked) {
+                    patternMaintPerPcs = getNum('patternMaintPerPcs');
+                }
+                if (isNewPatternActive) {
+                    const patternTotal = getNum('patternTotalCost');
+                    const patternType = document.getElementById('patternAmortType').value;
+                    patternAmortCost = (patternType === 'AMORTIZE') ? (patternTotal / qty) : 0;
+                }
+            }
+
             const sharedMouldingPatternCost = mouldingFeePerPcs + patternMaintPerPcs + patternAmortCost;
-            // Full In-House Molding Cost includes sand, core, coating + shared moulding & pattern
-            const totalMoldingCost = moldingSandCost + coreTotalCost + coatingCost + sharedMouldingPatternCost;
+            const totalMoldingCost = sandAndCoreTotal + sharedMouldingPatternCost;
 
             // 6. Melting Energy, Refractory & Labor
-            const kwhPerTon = parseFloat(document.getElementById('kwhPerTon').value) || 0;
-            const kwhRate = parseFloat(document.getElementById('mst-kwh-rate').value) || 1450;
-            const refractoryPerKg = parseFloat(document.getElementById('refractoryPerKg').value) || 0;
-            const laborMeltingPerKg = parseFloat(document.getElementById('laborMeltingPerKg').value) || 0;
+            const kwhPerTon = getNum('kwhPerTon');
+            const kwhRate = getNum('mst-kwh-rate') || 1450;
+            const refractoryPerKg = getNum('refractoryPerKg');
+            const laborMeltingPerKg = getNum('laborMeltingPerKg');
 
             const electricityPerKgLiquid = (kwhPerTon / 1000) * kwhRate;
-            const totalMeltingCost = requiredMeltWeight * (electricityPerKgLiquid + refractoryPerKg + laborMeltingPerKg);
+            const totalMeltingCost = isFinishingSectionActive
+                ? requiredMeltWeight * (electricityPerKgLiquid + refractoryPerKg + laborMeltingPerKg)
+                : 0;
 
-            // 7. Finishing, Consumables (Grinding Disc, Tooling, Putty, Paint), Machining & QC
-            const fettlingPerKg = parseFloat(document.getElementById('fettlingPerKg').value) || 0;
-            const heatTreatPerKg = parseFloat(document.getElementById('heatTreatPerKg').value) || 0;
-            const machiningPerPcs = parseFloat(document.getElementById('machiningPerPcs').value) || 0;
-            const qcPaintingPerPcs = parseFloat(document.getElementById('qcPaintingPerPcs').value) || 0;
+            // 7A. Finishing, Machining & QC Labor (Unit vs Daily)
+            let laborFinishingPerPcs = 0;
+            const isSubLaborActive = isFinishingSectionActive && document.getElementById('chk-sub-labor').checked;
+            const laborMode = document.getElementById('laborCalcMode').value;
 
-            const grindingDiscPerPcs = parseFloat(document.getElementById('grindingDiscPerPcs').value) || 0;
-            const toolingConsumablePerPcs = parseFloat(document.getElementById('toolingConsumablePerPcs').value) || 0;
-            const puttyWeldingPerPcs = parseFloat(document.getElementById('puttyWeldingPerPcs').value) || 0;
-            const paintMaterialPerPcs = parseFloat(document.getElementById('paintMaterialPerPcs').value) || 0;
+            document.getElementById('lbl-daily-qty').innerText = qty.toLocaleString('id-ID');
 
-            const totalConsumablesAndPaint = grindingDiscPerPcs + toolingConsumablePerPcs + puttyWeldingPerPcs + paintMaterialPerPcs;
-            document.getElementById('subtotal-consumables-badge').innerText = `Subtotal Alat & Cat: ${formatRp(totalConsumablesAndPaint)} /pcs`;
+            if (isSubLaborActive) {
+                if (laborMode === 'UNIT') {
+                    const fettCost = document.getElementById('chk-fettling').checked ? (netW * getNum('fettlingPerKg')) : 0;
+                    const machCost = document.getElementById('chk-machining').checked ? getNum('machiningPerPcs') : 0;
+                    const heatCost = document.getElementById('chk-heattreat').checked ? (netW * getNum('heatTreatPerKg')) : 0;
+                    const qcCost = document.getElementById('chk-qc').checked ? getNum('qcPaintingPerPcs') : 0;
+                    laborFinishingPerPcs = fettCost + machCost + heatCost + qcCost;
+                } else {
+                    // Daily Rate Calculation
+                    const wFett = parseFloat(document.getElementById('dayFettWorkers').value) || 0;
+                    const dFett = parseFloat(document.getElementById('dayFettDays').value) || 0;
+                    const rFett = getNum('dayFettRate');
+                    const totFett = document.getElementById('chk-day-fett').checked ? (wFett * dFett * rFett) : 0;
+                    document.getElementById('tot-day-fett').innerText = formatRp(totFett);
 
-            const totalFinishingCost = (netW * (fettlingPerKg + heatTreatPerKg)) + machiningPerPcs + qcPaintingPerPcs + totalConsumablesAndPaint;
+                    const wMach = parseFloat(document.getElementById('dayMachWorkers').value) || 0;
+                    const dMach = parseFloat(document.getElementById('dayMachDays').value) || 0;
+                    const rMach = getNum('dayMachRate');
+                    const totMach = document.getElementById('chk-day-mach').checked ? (wMach * dMach * rMach) : 0;
+                    document.getElementById('tot-day-mach').innerText = formatRp(totMach);
+
+                    const wQc = parseFloat(document.getElementById('dayQcWorkers').value) || 0;
+                    const dQc = parseFloat(document.getElementById('dayQcDays').value) || 0;
+                    const rQc = getNum('dayQcRate');
+                    const totQc = document.getElementById('chk-day-qc').checked ? (wQc * dQc * rQc) : 0;
+                    document.getElementById('tot-day-qc').innerText = formatRp(totQc);
+
+                    const totalDailyProject = totFett + totMach + totQc;
+                    laborFinishingPerPcs = totalDailyProject / qty;
+                    document.getElementById('lbl-daily-total-summary').innerText = `Total Upah: ${formatRp(totalDailyProject)} (${formatRp(laborFinishingPerPcs)} /pcs)`;
+                }
+            } else {
+                document.getElementById('lbl-daily-total-summary').innerText = 'Non-Aktif (Rp 0)';
+            }
+
+            // 7B. Consumables & Paint (Project Basis vs Per Pcs Basis)
+            let totalConsumablesPerPcs = 0;
+            let totalConsumablesProject = 0;
+            const isSubConsumablesActive = isFinishingSectionActive && document.getElementById('chk-sub-consumables').checked;
+            const consumableBasis = document.getElementById('consumableBasisMode').value;
+
+            const hintEl = document.getElementById('consumable-mode-hint');
+            if (consumableBasis === 'PER_PROJECT') {
+                hintEl.innerHTML = `Masukkan total belanja alat/bahan untuk <b>1 kali projek (${qty.toLocaleString('id-ID')} pcs)</b>. Otomatis dibagi ke per pcs.`;
+            } else {
+                hintEl.innerHTML = `Masukkan biaya alat/bahan <b>per 1 pcs</b> komponen.`;
+            }
+
+            if (isSubConsumablesActive) {
+                consumableItems.forEach(item => {
+                    if (item.checked) {
+                        if (consumableBasis === 'PER_PROJECT') {
+                            totalConsumablesProject += (item.costProject || 0);
+                        } else {
+                            totalConsumablesPerPcs += (item.costPcs || 0);
+                        }
+                    }
+                });
+                if (consumableBasis === 'PER_PROJECT') {
+                    totalConsumablesPerPcs = totalConsumablesProject / qty;
+                } else {
+                    totalConsumablesProject = totalConsumablesPerPcs * qty;
+                }
+            }
+
+            document.getElementById('subtotal-consumables-badge').innerText =
+                `Projek: ${formatRp(totalConsumablesProject)} (${formatRp(totalConsumablesPerPcs)} /pcs)`;
+
+            const totalFinishingCost = laborFinishingPerPcs + totalConsumablesPerPcs;
 
             // 8A. Calculate In-House HPP (Always computed for Make-vs-Buy comparison)
             const inhouseDirectSubtotal = netMaterialCost + totalMoldingCost + totalMeltingCost + totalFinishingCost;
             const rejectPct = Math.min(80, parseFloat(document.getElementById('rejectRatePct').value) || 0);
             const overheadPct = parseFloat(document.getElementById('overheadPct').value) || 0;
-            const logisticsPerKg = parseFloat(document.getElementById('logisticsPerKg').value) || 0;
+            const logisticsPerKg = getNum('logisticsPerKg');
             const logisticsCostPerPcs = netW * logisticsPerKg;
 
             const inhouseAfterReject = inhouseDirectSubtotal / (1 - (rejectPct / 100));
@@ -1295,9 +1620,9 @@
 
             // 8B. Calculate Subcontract (Outsourced Casting + Moulding/Pattern + In-House Finishing)
             const subPricingBasis = document.getElementById('subPricingBasis').value;
-            const subRawPrice = parseFloat(document.getElementById('subRawPrice').value) || 0;
-            const subTollFeePerKg = parseFloat(document.getElementById('subTollFeePerKg').value) || 0;
-            const subTransportPerKg = parseFloat(document.getElementById('subTransportPerKg').value) || 0;
+            const subRawPrice = getNum('subRawPrice');
+            const subTollFeePerKg = getNum('subTollFeePerKg');
+            const subTransportPerKg = getNum('subTransportPerKg');
             const subHiddenDefectPct = Math.min(50, parseFloat(document.getElementById('subHiddenDefectPct').value) || 0);
 
             const subVendorBaseCost = (subPricingBasis === 'PER_KG_NET') ? (netW * subRawPrice) : subRawPrice;
@@ -1310,7 +1635,7 @@
             const subFullHppPerPcs = subFullAfterDefect + subFullOverhead + logisticsCostPerPcs;
             const subFullHppPerKg = subFullHppPerPcs / netW;
 
-            // Toll Melting (Maklon) Cost: Raw Material from Us + Vendor Toll Fee + Moulding/Pattern + Our Finishing
+            // Toll Melting (Maklon) Cost
             const subTollServiceCost = netW * subTollFeePerKg;
             const subTollDirect = netMaterialCost + subTollServiceCost + subTransportCostPerPcs + sharedMouldingPatternCost + totalFinishingCost;
             const subTollAfterDefect = subTollDirect / (1 - (subHiddenDefectPct / 100));
@@ -1395,7 +1720,9 @@
                 document.getElementById('val-scrap-credit').innerText = '- ' + formatRp(scrapCreditValue);
 
                 document.getElementById('title-row-b').innerText = 'B. Biaya Moulding, Pasir, Inti & Pola';
-                document.getElementById('desc-molding').innerText = `Pasir ${sandWeightPerPcs.toFixed(0)} kg + Moulding ${formatRp(mouldingFeePerPcs)} + Pola`;
+                document.getElementById('desc-molding').innerText = isMoldingSectionActive
+                    ? `Pasir/Inti ${formatRp(sandAndCoreTotal)} + Moulding/Pola ${formatRp(sharedMouldingPatternCost)}`
+                    : 'Non-Aktif (Repeat Order / Tanpa Moulding)';
                 document.getElementById('val-molding').innerText = formatRp(totalMoldingCost);
 
                 document.getElementById('title-row-c').innerText = 'C. Energi Peleburan, Refraktori & Tenaga';
@@ -1412,7 +1739,9 @@
                 document.getElementById('row-scrap-credit').classList.add('hidden');
 
                 document.getElementById('title-row-b').innerText = 'B. Biaya Moulding, Setting & Amortisasi Pola';
-                document.getElementById('desc-molding').innerText = `Moulding ${formatRp(mouldingFeePerPcs)} + Rawat Pola ${formatRp(patternMaintPerPcs)} + Amortisasi`;
+                document.getElementById('desc-molding').innerText = isMoldingSectionActive
+                    ? `Moulding ${formatRp(mouldingFeePerPcs)} + Rawat ${formatRp(patternMaintPerPcs)} + Pola Baru ${formatRp(patternAmortCost)}`
+                    : 'Non-Aktif (Pola Sudah Ada)';
                 document.getElementById('val-molding').innerText = formatRp(sharedMouldingPatternCost);
 
                 document.getElementById('title-row-c').innerText = 'C. Transport Ambil Coran dari Subkon';
@@ -1430,7 +1759,9 @@
                 document.getElementById('val-scrap-credit').innerText = '- ' + formatRp(scrapCreditValue);
 
                 document.getElementById('title-row-b').innerText = 'B. Biaya Moulding, Setting & Amortisasi Pola';
-                document.getElementById('desc-molding').innerText = `Moulding ${formatRp(mouldingFeePerPcs)} + Rawat Pola ${formatRp(patternMaintPerPcs)} + Amortisasi`;
+                document.getElementById('desc-molding').innerText = isMoldingSectionActive
+                    ? `Moulding ${formatRp(mouldingFeePerPcs)} + Rawat ${formatRp(patternMaintPerPcs)} + Pola Baru ${formatRp(patternAmortCost)}`
+                    : 'Non-Aktif (Pola Sudah Ada)';
                 document.getElementById('val-molding').innerText = formatRp(sharedMouldingPatternCost);
 
                 document.getElementById('title-row-c').innerText = 'C. Jasa Maklon Cetak-Lebur & Transport';
@@ -1440,7 +1771,7 @@
                 document.getElementById('desc-risk-ovh').innerText = `Risiko Keropos Bubut ${subHiddenDefectPct}% + Overhead ${overheadPct}%`;
             }
 
-            document.getElementById('desc-finishing').innerText = `Alat & Cat (${formatRp(totalConsumablesAndPaint)}) + Bubut + Upah Gerinda`;
+            document.getElementById('desc-finishing').innerText = `Upah (${formatRp(laborFinishingPerPcs)}) + Alat & Cat (${formatRp(totalConsumablesPerPcs)})`;
             document.getElementById('val-finishing').innerText = formatRp(totalFinishingCost);
             document.getElementById('val-risk-ovh').innerText = formatRp(activeRiskOvhTotal);
             document.getElementById('val-logistics').innerText = formatRp(logisticsCostPerPcs);
@@ -1467,30 +1798,30 @@
             if (type === 'FC250') {
                 document.getElementById('partName').value = 'Pulley V-Belt SPB 300 x 4 Jalur';
                 document.getElementById('alloyGrade').value = 'FC250';
-                document.getElementById('orderQty').value = 100;
+                setFormattedVal('orderQty', 100);
                 document.getElementById('netWeight').value = 25;
                 document.getElementById('grossWeight').value = 35;
                 document.getElementById('sandSystem').value = 'GREENSAND';
                 document.getElementById('coreWeight').value = 3.5;
-                document.getElementById('machiningPerPcs').value = 45000;
+                setFormattedVal('machiningPerPcs', 45000);
             } else if (type === 'FCD500') {
                 document.getElementById('partName').value = 'Body Gate Valve DN150 PN16';
                 document.getElementById('alloyGrade').value = 'FCD500';
-                document.getElementById('orderQty').value = 50;
+                setFormattedVal('orderQty', 50);
                 document.getElementById('netWeight').value = 38;
                 document.getElementById('grossWeight').value = 58;
                 document.getElementById('sandSystem').value = 'FURAN';
                 document.getElementById('coreWeight').value = 12;
-                document.getElementById('machiningPerPcs').value = 110000;
+                setFormattedVal('machiningPerPcs', 110000);
             } else if (type === 'AL') {
                 document.getElementById('partName').value = 'Casing Gearbox Motor Listrik';
                 document.getElementById('alloyGrade').value = 'AL_ADC12';
-                document.getElementById('orderQty').value = 200;
+                setFormattedVal('orderQty', 200);
                 document.getElementById('netWeight').value = 4.2;
                 document.getElementById('grossWeight').value = 6.5;
                 document.getElementById('sandSystem').value = 'CO2';
                 document.getElementById('coreWeight').value = 1.2;
-                document.getElementById('machiningPerPcs').value = 25000;
+                setFormattedVal('machiningPerPcs', 25000);
             }
             onGradeChange();
             onSandSystemChange();
@@ -1563,7 +1894,7 @@
 
         // Open & Populate Quotation Modal
         function openQuotationModal() {
-            const qty = parseFloat(document.getElementById('orderQty').value) || 1;
+            const qty = Math.max(1, getNum('orderQty'));
             const netW = parseFloat(document.getElementById('netWeight').value) || 1;
             const taxPct = parseFloat(document.getElementById('taxPct').value) || 0;
             const sellPcsText = document.getElementById('res-selling-pcs').innerText.split('/')[0].replace(/[^0-9]/g, '');
@@ -1596,6 +1927,7 @@
 
         // Initialize on Window Load
         window.onload = function() {
+            renderConsumablesList();
             syncYieldFromWeights();
             renderHistoryTable();
         };
