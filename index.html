@@ -88,6 +88,57 @@
         .step-badge-num {
             transition: all 0.2s ease;
         }
+        /* Modern Clean Info Tooltip (i) */
+        .info-tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: help;
+            color: #94a3b8;
+            transition: color 0.15s ease;
+        }
+        .info-tooltip:hover {
+            color: #ea580c;
+        }
+        .info-tooltip .tooltip-box {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            width: 240px;
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-size: 11px;
+            font-weight: 400;
+            line-height: 1.45;
+            padding: 8px 10px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4);
+            border: 1px solid #334155;
+            z-index: 50;
+            pointer-events: none;
+            transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+        .info-tooltip .tooltip-box::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #0f172a transparent transparent transparent;
+        }
+        .info-tooltip:hover .tooltip-box {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
@@ -651,7 +702,6 @@
                             <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">1</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Biaya Moulding (Cetakan), Inti & Pola</h2>
                         </label>
-                        <span id="badge-sec3-status" class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full font-medium">Centang untuk mengaktifkan</span>
                     </div>
                     <div id="body-section-molding" class="p-5 space-y-4 section-disabled">
                         <!-- In-House Sand Molding Inputs -->
@@ -703,14 +753,49 @@
                             </div>
                         </div>
 
-                        <!-- Modul Dinamis: Daftar Biaya Tambahan Cetakan / Pola / Moulding -->
-                        <div class="bg-amber-50/50 p-3.5 rounded-xl border border-amber-200/80 space-y-3">
-                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/60 pb-2.5">
+                        <!-- 1. Opsi Buat Pola / Mould Baru (Posisi Paling Atas) -->
+                        <div class="bg-amber-50/70 p-4 rounded-xl border border-amber-200/90 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5">
+                                    <label class="flex items-center gap-2 text-xs font-bold text-amber-950 cursor-pointer">
+                                        <input type="checkbox" id="chk-new-pattern" onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded">
+                                        <i class="fa-solid fa-compass-drafting text-amber-600"></i> Buat Pola / Mould Baru
+                                    </label>
+                                    <span class="info-tooltip">
+                                        <i class="fa-solid fa-circle-info text-xs"></i>
+                                        <span class="tooltip-box">Biaya pembuatan master pola baru. Biaya bisa diamortisasi (dibagi rata ke jumlah order) atau dibebankan penuh.</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div id="wrap-new-pattern-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-amber-200/60 section-disabled">
                                 <div>
-                                    <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Biaya Buat Pola / Mould Baru (Total Rp)</label>
+                                    <div class="flex items-stretch">
+                                        <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-600 text-xs font-bold px-2.5 py-1.5 rounded-l-lg flex items-center">Rp</span>
+                                        <input type="text" inputmode="decimal" id="patternTotalCost" value="0" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-1.5 text-sm border border-slate-300 bg-white rounded-r-lg font-mono font-bold text-slate-900 focus:border-orange-500 focus:outline-none">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Metode Pembebanan Biaya Pola Baru</label>
+                                    <select id="patternAmortType" onchange="calculateAll()" class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white font-semibold text-slate-800">
+                                        <option value="AMORTIZE">Amortisasi (Bagi rata ke Jumlah Order saat ini)</option>
+                                        <option value="SEPARATE">Tagih Terpisah di Luar HPP Unit</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Modul Dinamis: Daftar Biaya Tambahan Cetakan / Pola / Moulding (Di Bawah Pola Baru & Default Kosong) -->
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                                         <i class="fa-solid fa-box-open text-amber-600"></i> Daftar Biaya Tambahan Cetakan / Pola / Moulding
                                     </span>
-                                    <p class="text-[10px] text-amber-700">Tambahkan biaya operasional moulding, setting pola, atau perawatan box secara fleksibel</p>
+                                    <span class="info-tooltip">
+                                        <i class="fa-solid fa-circle-info text-xs"></i>
+                                        <span class="tooltip-box">Biaya operasional tambahan seperti setting pola, perbaikan box cetak, atau jasa moulding khusus.</span>
+                                    </span>
                                 </div>
                                 <button type="button" onclick="addMoldingCustomItem()" class="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1">
                                     <i class="fa-solid fa-plus"></i> Tambah Biaya Pola/Moulding
@@ -720,41 +805,20 @@
                             <!-- Preset Chips Pola/Moulding -->
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <span class="text-[10px] font-semibold text-slate-500 mr-1"><i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i>Preset Cepat:</span>
-                                <button type="button" onclick="addMoldingCustomPreset('Setting Pola', 0, 'PER_PROJECT')" class="text-[10px] font-semibold bg-white hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-amber-300 px-2.5 py-1 rounded-full transition flex items-center gap-1">
+                                <button type="button" onclick="addMoldingCustomPreset('Setting Pola', 0, 'PER_PROJECT')" class="text-[10px] font-semibold bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-300 hover:border-amber-300 px-2.5 py-1 rounded-full transition flex items-center gap-1">
                                     <i class="fa-solid fa-plus text-[9px] text-amber-600"></i> Setting Pola
                                 </button>
-                                <button type="button" onclick="addMoldingCustomPreset('Jasa Moulding', 0, 'PER_PCS')" class="text-[10px] font-semibold bg-white hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-amber-300 px-2.5 py-1 rounded-full transition flex items-center gap-1">
+                                <button type="button" onclick="addMoldingCustomPreset('Jasa Moulding', 0, 'PER_PCS')" class="text-[10px] font-semibold bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-300 hover:border-amber-300 px-2.5 py-1 rounded-full transition flex items-center gap-1">
                                     <i class="fa-solid fa-plus text-[9px] text-amber-600"></i> Jasa Moulding
                                 </button>
-                                <button type="button" onclick="addMoldingCustomPreset('Modifikasi Box', 0, 'PER_PROJECT')" class="text-[10px] font-semibold bg-white hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-amber-300 px-2.5 py-1 rounded-full transition flex items-center gap-1">
+                                <button type="button" onclick="addMoldingCustomPreset('Modifikasi Box', 0, 'PER_PROJECT')" class="text-[10px] font-semibold bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-300 hover:border-amber-300 px-2.5 py-1 rounded-full transition flex items-center gap-1">
                                     <i class="fa-solid fa-plus text-[9px] text-amber-600"></i> Modifikasi Box
                                 </button>
                             </div>
 
                             <!-- Dynamic Rows Container for Molding/Pattern Costs -->
-                            <div id="molding-custom-list-container" class="space-y-2">
-                                <!-- Rendered via JS -->
-                            </div>
-
-                            <!-- Opsi Buat Pola / Mould Baru -->
-                            <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-2.5 mt-2">
-                                <label class="flex items-center gap-2 text-xs font-bold text-amber-950 cursor-pointer">
-                                    <input type="checkbox" id="chk-new-pattern" onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded">
-                                    Buat Pola / Mould Baru (Centang jika ada pembuatan pola baru)
-                                </label>
-                                <div id="wrap-new-pattern-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 section-disabled">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Biaya Buat Pola / Mould Baru (Total Rp)</label>
-                                        <input type="text" inputmode="decimal" id="patternTotalCost" value="0" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-1.5 text-sm border border-slate-300 bg-white rounded-lg font-semibold">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Metode Pembebanan Biaya Pola Baru</label>
-                                        <select id="patternAmortType" onchange="calculateAll()" class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white">
-                                            <option value="AMORTIZE">Amortisasi (Bagi rata ke Jumlah Order saat ini)</option>
-                                            <option value="SEPARATE">Tagih Terpisah di Luar HPP Unit</option>
-                                        </select>
-                                    </div>
-                                </div>
+                            <div id="molding-custom-list-container" class="space-y-2 empty:hidden">
+                                <!-- Rendered via JS (Default Kosong) -->
                             </div>
                         </div>
                     </div>
@@ -768,7 +832,6 @@
                             <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">2</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec4">Proses Internal Kita: Finishing, Machining & QC</h2>
                         </label>
-                        <span id="badge-sec4-status" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">Centang yang dikerjakan</span>
                     </div>
                     <div id="body-section-finishing" class="p-5 space-y-5 section-disabled">
                         <!-- In-House Melting Energy & Furnace Inputs -->
@@ -817,7 +880,6 @@
                                     <button type="button" onclick="addProjectLaborItem()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
                                         <i class="fa-solid fa-plus"></i> Tambah Pos Upah Kerja Projek
                                     </button>
-                                    <span class="text-[11px] text-slate-500">Centang pekerjaan yang dilakukan</span>
                                 </div>
                             </div>
 
@@ -932,88 +994,124 @@
                                 <button type="button" onclick="addConsumableItem()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
                                     <i class="fa-solid fa-plus"></i> Tambah Biaya Alat / Consumable Lainnya
                                 </button>
-                                <span class="text-[11px] text-slate-500">Centang item yang dipakai saja</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 5: Overhead Adaptif, Biaya Kirim, Margin Profit Fleksibel & Pajak -->
+                <!-- Section 4B (BARU): Biaya Jasa Finishing & Machining Luar (Subkon / Outsource) -->
+                <div id="section-ext-finishing" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
+                        <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                            <input type="checkbox" id="chk-section-ext-finishing" onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded border-slate-300 focus:ring-orange-500">
+                            <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">3</span>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Biaya Jasa Finishing & Machining Luar (Subkon / Outsource)</h2>
+                        </label>
+                    </div>
+
+                    <div id="body-section-ext-finishing" class="p-5 space-y-4 section-disabled">
+                        <div class="bg-cyan-50/50 p-3.5 rounded-xl border border-cyan-200/80 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-cyan-200/60 pb-2.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-cyan-950 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-gears text-cyan-600"></i> Daftar Pekerjaan Subkon Finishing / Machining Eksternal
+                                    </span>
+                                    <span class="info-tooltip">
+                                        <i class="fa-solid fa-circle-info text-xs"></i>
+                                        <span class="tooltip-box">Biaya jasa pengerjaan di bengkel luar seperti bubut CNC, milling, sandblasting, galvanis, atau heat treatment.</span>
+                                    </span>
+                                </div>
+                                <button type="button" onclick="addExtFinishingItem()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1">
+                                    <i class="fa-solid fa-plus"></i> Tambah Biaya Jasa Luar
+                                </button>
+                            </div>
+
+                            <!-- Preset Chip Cepat Jasa Luar -->
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="text-[10px] font-semibold text-slate-500 mr-1"><i class="fa-solid fa-wand-magic-sparkles text-cyan-600 mr-1"></i>Preset Cepat:</span>
+                                <button type="button" onclick="addExtFinishingPreset('Bubut Luar', 0, 'PER_PCS')" class="text-[10px] font-semibold bg-white hover:bg-cyan-50 text-slate-700 hover:text-cyan-900 border border-slate-300 hover:border-cyan-400 px-2.5 py-1 rounded-full transition flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-[9px] text-cyan-600"></i> Bubut Luar
+                                </button>
+                                <button type="button" onclick="addExtFinishingPreset('Milling / CNC Luar', 0, 'PER_PCS')" class="text-[10px] font-semibold bg-white hover:bg-cyan-50 text-slate-700 hover:text-cyan-900 border border-slate-300 hover:border-cyan-400 px-2.5 py-1 rounded-full transition flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-[9px] text-cyan-600"></i> Milling / CNC Luar
+                                </button>
+                                <button type="button" onclick="addExtFinishingPreset('Sandblasting / Cat Luar', 0, 'PER_KG')" class="text-[10px] font-semibold bg-white hover:bg-cyan-50 text-slate-700 hover:text-cyan-900 border border-slate-300 hover:border-cyan-400 px-2.5 py-1 rounded-full transition flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-[9px] text-cyan-600"></i> Sandblasting / Cat Luar
+                                </button>
+                                <button type="button" onclick="addExtFinishingPreset('Heat Treatment / Hardening', 0, 'PER_KG')" class="text-[10px] font-semibold bg-white hover:bg-cyan-50 text-slate-700 hover:text-cyan-900 border border-slate-300 hover:border-cyan-400 px-2.5 py-1 rounded-full transition flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-[9px] text-cyan-600"></i> Heat Treatment / Hardening
+                                </button>
+                            </div>
+
+                            <!-- Dynamic Rows Container for External Finishing/Machining -->
+                            <div id="ext-finishing-list-container" class="space-y-2 empty:hidden">
+                                <!-- Rendered via JS -->
+                            </div>
+
+                            <!-- Summary Footer Bar for External Services -->
+                            <div class="flex flex-wrap justify-between items-center bg-white px-3 py-2 rounded-lg border border-cyan-200/80 text-xs">
+                                <span class="text-slate-600 font-medium">Total Beban Jasa Finishing / Machining Luar:</span>
+                                <span class="font-mono font-bold text-cyan-900" id="lbl-ext-finishing-summary">Total Projek: Rp 0 (Rp 0 /pcs)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Overhead Adaptif, Biaya Kirim, Margin Profit Fleksibel & Pajak (Grid 2 Baris Proporsional) -->
                 <div id="section-risk-margin" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
                         <div class="flex items-center gap-2.5">
-                            <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">3</span>
+                            <span class="step-badge-num bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">4</span>
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec5">Overhead, Biaya Kirim & Target Profit</h2>
                         </div>
                         <span class="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-semibold" id="lbl-profit-mode-pill">Basis Profit: % dari HPP</span>
                     </div>
-                    <div class="p-5 space-y-4">
-                        <!-- Main Commercial Row: Overhead Adaptif | Packing & Kirim | Margin Profit Fleksibel | PPN -->
-                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-start">
+                    <div class="p-5 space-y-5">
+                        <!-- BARIS 1: Biaya Operasional & Logistik (Reject Cor [Inhouse], Overhead, Packing & Kirim) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start pb-4 border-b border-slate-100">
                             <!-- Reject Cor (Hanya muncul saat Mode Cor Sendiri In-House) -->
-                            <div id="wrap-inhouse-reject" class="hidden sm:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Cadangan risiko cacat keropos/misrun dapur lebur">Reject Cor (%)</label>
-                                <input type="number" id="rejectRatePct" value="0" min="0" max="50" step="0.5" oninput="calculateAll()" class="w-full px-2.5 py-2 text-xs sm:text-sm border border-rose-300 bg-rose-50/30 rounded-lg font-bold text-rose-900 focus:outline-none">
+                            <div id="wrap-inhouse-reject" class="hidden sm:col-span-3">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5" title="Cadangan risiko cacat keropos/misrun dapur lebur">Cadangan Reject Cor (%)</label>
+                                <div class="flex items-stretch">
+                                    <input type="number" id="rejectRatePct" value="0" min="0" max="50" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-rose-300 bg-rose-50/30 rounded-l-lg font-mono font-bold text-rose-900 focus:outline-none">
+                                    <span class="bg-rose-100 border border-l-0 border-rose-300 text-rose-800 text-xs font-bold px-2.5 py-2 rounded-r-lg flex items-center">%</span>
+                                </div>
                             </div>
 
-                            <!-- Overhead Adaptif (%, Rp Total Projek, Rp / Pcs) -->
-                            <div id="wrap-overhead-col" class="sm:col-span-3">
-                                <label class="block text-xs font-semibold text-slate-700 mb-1" title="Biaya operasional bengkel, listrik, tool, dll">Overhead</label>
-                                <div id="overhead-main-input-group" class="flex items-stretch transition-opacity">
-                                    <span id="ovh-prefix-rp" class="hidden bg-slate-100 border border-r-0 border-slate-300 text-slate-600 text-xs font-bold px-2 py-2 rounded-l-lg items-center shrink-0">Rp</span>
-                                    <input type="text" inputmode="decimal" id="overheadVal" value="0" oninput="onOverheadValueInput(this)" class="w-full min-w-0 px-2.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-l-lg font-mono font-bold text-slate-800 focus:border-orange-500 focus:outline-none">
-                                    <select id="overheadBasis" onchange="onOverheadBasisChange()" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-800 text-[11px] font-bold px-2 py-2 rounded-r-lg shrink-0 cursor-pointer focus:outline-none">
-                                        <option value="PCT">% (HPP)</option>
-                                        <option value="PER_PROJECT">Rp Projek</option>
+                            <!-- Overhead Adaptif (Rp/Pcs, %, Rp Total Projek) -->
+                            <div id="wrap-overhead-col" class="sm:col-span-6">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5" title="Biaya operasional bengkel, listrik, tool, dll">Biaya Overhead Operasional</label>
+                                <div id="overhead-main-input-group" class="flex items-stretch transition-opacity w-full">
+                                    <span id="ovh-prefix-rp" class="hidden bg-slate-100 border border-r-0 border-slate-300 text-slate-600 text-xs font-bold px-2.5 py-2 rounded-l-lg items-center shrink-0">Rp</span>
+                                    <input type="text" inputmode="decimal" id="overheadVal" value="0" oninput="onOverheadValueInput(this)" class="w-full min-w-0 px-3 py-2 text-sm border border-slate-300 rounded-l-lg font-mono font-bold text-slate-800 focus:border-orange-500 focus:outline-none">
+                                    <select id="overheadBasis" onchange="onOverheadBasisChange()" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-800 text-xs font-bold px-3 py-2 rounded-r-lg shrink-0 cursor-pointer focus:outline-none">
+                                        <option value="PCT">% (dari HPP)</option>
                                         <option value="PER_PCS">Rp / Pcs</option>
+                                        <option value="PER_PROJECT">Rp Total Projek</option>
                                     </select>
                                 </div>
                                 <!-- Progressive Disclosure Checkbox: Rinci Komponen Overhead -->
-                                <label class="flex items-center gap-1.5 mt-1.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900 cursor-pointer select-none">
+                                <label class="inline-flex items-center gap-2 mt-2 text-xs font-semibold text-blue-700 hover:text-blue-900 cursor-pointer select-none">
                                     <input type="checkbox" id="chk-overhead-detail" onchange="toggleOverheadDetailMode()" class="w-3.5 h-3.5 text-blue-600 rounded border-slate-300">
-                                    <span>Rinci Komponen Overhead</span>
+                                    <span>Rinci Komponen Overhead (Listrik, Tool, dll.)</span>
                                 </label>
                             </div>
 
-                            <!-- Packing & Kirim -->
-                            <div id="wrap-logistics-col" class="sm:col-span-3">
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Packing & Kirim</label>
-                                <div class="flex items-stretch">
-                                    <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-600 text-xs font-bold px-2 py-2 rounded-l-lg flex items-center shrink-0">Rp</span>
-                                    <input type="text" inputmode="decimal" id="logisticsVal" value="0" oninput="formatThousandInput(this); calculateAll()" class="w-full min-w-0 px-2.5 py-2 text-xs sm:text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:border-orange-500 focus:outline-none">
-                                    <select id="logisticsBasis" onchange="calculateAll()" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-800 text-[11px] font-bold px-2 py-2 rounded-r-lg shrink-0 cursor-pointer focus:outline-none">
+                            <!-- Packing & Kirim (/projek, /pcs, /kg) -->
+                            <div id="wrap-logistics-col" class="sm:col-span-6">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Biaya Packing & Pengiriman</label>
+                                <div class="flex items-stretch w-full">
+                                    <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-600 text-xs font-bold px-2.5 py-2 rounded-l-lg flex items-center shrink-0">Rp</span>
+                                    <input type="text" inputmode="decimal" id="logisticsVal" value="0" oninput="formatThousandInput(this); calculateAll()" class="w-full min-w-0 px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:border-orange-500 focus:outline-none">
+                                    <select id="logisticsBasis" onchange="calculateAll()" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-800 text-xs font-bold px-3 py-2 rounded-r-lg shrink-0 cursor-pointer focus:outline-none">
                                         <option value="PER_PROJECT">/ projek</option>
+                                        <option value="PER_PCS">/ pcs</option>
                                         <option value="PER_KG">/ kg</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <!-- Margin Profit (Fleksibel: %, Rp/kg, Rp/pcs, Rp Total Projek) -->
-                            <div id="wrap-profit-col" class="sm:col-span-4">
-                                <label class="block text-xs font-bold text-emerald-900 mb-1">Target Margin Profit</label>
-                                <div class="flex items-stretch">
-                                    <span id="profit-prefix-rp" class="hidden bg-emerald-100 border border-r-0 border-emerald-400 text-emerald-900 text-xs font-bold px-2 py-2 rounded-l-lg items-center shrink-0">Rp</span>
-                                    <input type="text" inputmode="decimal" id="profitMarginVal" value="0" oninput="onProfitValueInput(this)" class="w-full min-w-0 px-2.5 py-2 text-xs sm:text-sm border border-emerald-400 bg-emerald-50/40 rounded-l-lg font-mono font-extrabold text-emerald-950 focus:border-emerald-600 focus:outline-none">
-                                    <select id="profitMarginBasis" onchange="onProfitBasisChange()" class="bg-emerald-600 text-white border border-emerald-600 text-[11px] font-bold px-2 py-2 rounded-r-lg shrink-0 cursor-pointer focus:outline-none">
-                                        <option value="PCT">% (Persen)</option>
-                                        <option value="PER_KG">Rp / kg</option>
-                                        <option value="PER_PCS">Rp / pcs</option>
-                                        <option value="PER_PROJECT">Rp Projek</option>
-                                    </select>
-                                </div>
-                                <span id="lbl-profit-calc-hint" class="text-[10px] text-emerald-700 font-mono font-semibold block mt-1 leading-tight">
-                                    = Laba Rp 0/pcs (Total: Rp 0)
+                                <span id="lbl-logistics-calc-hint" class="text-[11px] text-slate-500 font-mono block mt-1.5">
+                                    = Rp 0 /pcs (Total: Rp 0)
                                 </span>
-                            </div>
-
-                            <!-- PPN (%) -->
-                            <div id="wrap-tax-col" class="sm:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">PPN (%)</label>
-                                <select id="taxPct" onchange="calculateAll()" class="w-full px-2 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg bg-white font-bold text-slate-800 focus:border-orange-500 focus:outline-none">
-                                    <option value="0" selected>0% (Non-PKP)</option>
-                                    <option value="11">11% (PKP)</option>
-                                    <option value="12">12% (PKP)</option>
-                                </select>
                             </div>
                         </div>
 
@@ -1051,6 +1149,45 @@
                             <!-- Dynamic Rows Overhead Detail -->
                             <div id="overhead-detail-list-container" class="space-y-2">
                                 <!-- Rendered via JS -->
+                            </div>
+                        </div>
+
+                        <!-- BARIS 2: Komersial & Pajak (Target Margin Profit & PPN) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
+                            <!-- Target Margin Profit (7 Cols) -->
+                            <div id="wrap-profit-col" class="sm:col-span-7">
+                                <label class="block text-xs font-bold text-emerald-900 mb-1.5">Target Margin Profit / Keuntungan</label>
+                                <div class="flex items-stretch w-full">
+                                    <span id="profit-prefix-rp" class="hidden bg-emerald-100 border border-r-0 border-emerald-400 text-emerald-900 text-xs font-bold px-2.5 py-2 rounded-l-lg items-center shrink-0">Rp</span>
+                                    <input type="text" inputmode="decimal" id="profitMarginVal" value="0" oninput="onProfitValueInput(this)" class="w-full min-w-0 px-3 py-2 text-sm border border-emerald-400 bg-emerald-50/40 rounded-l-lg font-mono font-extrabold text-emerald-950 focus:border-emerald-600 focus:outline-none">
+                                    <select id="profitMarginBasis" onchange="onProfitBasisChange()" class="bg-emerald-600 text-white border border-emerald-600 text-xs font-bold px-3 py-2 rounded-r-lg shrink-0 cursor-pointer focus:outline-none">
+                                        <option value="PCT">% (Persentase HPP)</option>
+                                        <option value="PER_KG">Rp / kg</option>
+                                        <option value="PER_PCS">Rp / pcs</option>
+                                        <option value="PER_PROJECT">Rp Total Projek</option>
+                                    </select>
+                                </div>
+                                <span id="lbl-profit-calc-hint" class="text-[11px] text-emerald-700 font-mono font-semibold block mt-1.5 leading-tight">
+                                    = Laba Rp 0/pcs (Total: Rp 0)
+                                </span>
+                            </div>
+
+                            <!-- PPN (%) (5 Cols - Lebar & Tidak Terpotong) -->
+                            <div id="wrap-tax-col" class="sm:col-span-5">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pajak PPN (%)</label>
+                                <div class="flex items-stretch gap-2 w-full">
+                                    <select id="taxSelectMode" onchange="onTaxModeChange()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white font-bold text-slate-800 focus:border-orange-500 focus:outline-none cursor-pointer">
+                                        <option value="0" selected>0% (Non-PKP / Tanpa PPN)</option>
+                                        <option value="11">11% (PKP Standar)</option>
+                                        <option value="12">12% (PKP)</option>
+                                        <option value="CUSTOM">Custom (%)</option>
+                                    </select>
+                                    <div id="wrap-custom-tax-input" class="hidden items-stretch w-28 shrink-0">
+                                        <input type="number" id="taxPct" value="0" min="0" max="100" step="0.5" oninput="calculateAll()" class="w-full px-2.5 py-2 text-sm border border-orange-400 bg-orange-50/20 rounded-l-lg font-mono font-bold text-slate-900 focus:outline-none">
+                                        <span class="bg-slate-100 border border-l-0 border-orange-400 text-slate-700 text-xs font-bold px-2 py-2 rounded-r-lg flex items-center">%</span>
+                                    </div>
+                                </div>
+                                <span class="text-[11px] text-slate-400 block mt-1.5">Pilih tarif PPN sesuai kesepakatan faktur klien</span>
                             </div>
                         </div>
                     </div>
@@ -1260,12 +1397,23 @@
 
                             <div class="py-2.5 flex justify-between items-start bg-purple-50/40 px-2 rounded-lg">
                                 <div>
-                                    <span class="font-semibold text-slate-800 block">D. Finishing, Alat Gerinda, Cat, Bubut & QC</span>
+                                    <span class="font-semibold text-slate-800 block">D1. Proses Internal: Finishing, Cat, Bubut & QC</span>
                                     <span class="text-[11px] text-slate-500" id="desc-finishing">Upah + Gerinda/Pahat + Cat + Bubut</span>
                                 </div>
                                 <div class="text-right">
-                                    <span class="font-mono font-bold text-purple-900 block" id="val-finishing">Rp 87.000 <span class="text-[10px] font-normal text-purple-600">/pcs</span></span>
-                                    <span class="text-[11px] font-mono text-purple-700 font-semibold block" id="tot-finishing">Total: Rp 8.700.000</span>
+                                    <span class="font-mono font-bold text-purple-900 block" id="val-finishing">Rp 0 <span class="text-[10px] font-normal text-purple-600">/pcs</span></span>
+                                    <span class="text-[11px] font-mono text-purple-700 font-semibold block" id="tot-finishing">Total: Rp 0</span>
+                                </div>
+                            </div>
+
+                            <div class="py-2.5 flex justify-between items-start bg-cyan-50/50 px-2 rounded-lg">
+                                <div>
+                                    <span class="font-semibold text-slate-800 block">D2. Jasa Finishing & Machining Luar (Subkon)</span>
+                                    <span class="text-[11px] text-slate-500" id="desc-ext-finishing">Non-Aktif (Rp 0)</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-mono font-bold text-cyan-900 block" id="val-ext-finishing">Rp 0 <span class="text-[10px] font-normal text-cyan-600">/pcs</span></span>
+                                    <span class="text-[11px] font-mono text-cyan-700 font-semibold block" id="tot-ext-finishing">Total: Rp 0</span>
                                 </div>
                             </div>
 
@@ -1712,11 +1860,6 @@
             container.innerHTML = '';
 
             if (!subCustomExtras || subCustomExtras.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-2.5 px-3 bg-white rounded-lg border border-dashed border-slate-300 text-[11px] text-slate-400">
-                        Belum ada biaya tambahan subkon. Klik <b>"+ Tambah Biaya Subkon"</b> atau pilih tombol cepat di atas jika ada tagihan ekstra.
-                    </div>
-                `;
                 return;
             }
 
@@ -2059,18 +2202,12 @@
             document.getElementById('subExtraDesc').value = '';
             document.getElementById('subExtraCostVal').value = '0';
 
-            document.getElementById('orderQty').value = '0';
-            document.getElementById('netWeight').value = '0';
-            document.getElementById('grossWeight').value = '0';
-            document.getElementById('subSpecTotalWeight').value = '0';
-            document.getElementById('subSpecPcsWeight').value = '0';
-
-            // Reset Card 1 (Moulding) & Card 2 (Finishing) -> Unchecked & 0
+            // Reset Card 1 (Moulding) & Card 2 (Finishing) & Card 3 (Ext Finishing) -> Unchecked & 0
             document.getElementById('chk-section-molding').checked = false;
             document.getElementById('chk-sand-core').checked = false;
             document.getElementById('chk-new-pattern').checked = false;
             document.getElementById('patternTotalCost').value = '0';
-            moldingCustomItems = [{ id: Date.now(), name: '', amount: 0, basis: 'PER_PROJECT' }];
+            moldingCustomItems = [];
 
             document.getElementById('chk-section-finishing').checked = false;
             document.getElementById('chk-sub-labor').checked = false;
@@ -2078,7 +2215,10 @@
             projectLaborItems.forEach(i => { i.checked = false; i.costProject = 0; });
             consumableItems.forEach(i => { i.checked = false; i.costProject = 0; i.costPcs = 0; });
 
-            // Reset Card 3 (Overhead, Packing, Profit, Tax) -> 0
+            document.getElementById('chk-section-ext-finishing').checked = false;
+            extFinishingItems = [];
+
+            // Reset Card 4 (Overhead, Packing, Profit, Tax) -> 0
             document.getElementById('rejectRatePct').value = '0';
             document.getElementById('chk-overhead-detail').checked = false;
             document.getElementById('overheadVal').value = '0';
@@ -2088,14 +2228,19 @@
             document.getElementById('overhead-main-input-group').classList.remove('opacity-50', 'pointer-events-none');
 
             document.getElementById('logisticsVal').value = '0';
+            document.getElementById('logisticsBasis').value = 'PER_PROJECT';
             document.getElementById('profitMarginVal').value = '0';
             document.getElementById('profitMarginBasis').value = 'PCT';
+            document.getElementById('taxSelectMode').value = '0';
             document.getElementById('taxPct').value = '0';
+            document.getElementById('wrap-custom-tax-input').classList.add('hidden');
+            document.getElementById('wrap-custom-tax-input').classList.remove('flex');
 
             isFormFilled = false;
             renderSubInvoiceTable();
             renderSubCustomExtraList();
             renderMoldingCustomList();
+            renderExtFinishingList();
             renderOverheadDetailList();
             renderProjectLaborList();
             renderConsumablesList();
@@ -2105,10 +2250,8 @@
             showToast('Seluruh tabel & form berhasil di-reset bersih ke 0!');
         }
 
-        // Dynamic Molding & Pattern Custom Items (Card 1) - Default nominal 0
-        let moldingCustomItems = [
-            { id: 301, name: '', amount: 0, basis: 'PER_PROJECT' }
-        ];
+        // Dynamic Molding & Pattern Custom Items (Card 1) - Default KOSONG
+        let moldingCustomItems = [];
 
         function renderMoldingCustomList() {
             const container = document.getElementById('molding-custom-list-container');
@@ -2118,11 +2261,6 @@
             const qty = Math.max(1, getNum('orderQty') || 1);
 
             if (!moldingCustomItems || moldingCustomItems.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-2 px-3 bg-white rounded-lg border border-dashed border-amber-300 text-[11px] text-slate-400">
-                        Belum ada biaya pola/moulding tambahan. Klik <b>"+ Tambah Biaya Pola/Moulding"</b> atau pilih preset di atas.
-                    </div>
-                `;
                 return;
             }
 
@@ -2208,11 +2346,7 @@
             if (!document.getElementById('chk-section-molding').checked) {
                 document.getElementById('chk-section-molding').checked = true;
             }
-            if (moldingCustomItems.length === 1 && moldingCustomItems[0].amount === 0 && !moldingCustomItems[0].name) {
-                moldingCustomItems[0] = { id: Date.now(), name: label, amount: defaultAmount, basis: basisType };
-            } else {
-                moldingCustomItems.push({ id: Date.now(), name: label, amount: defaultAmount, basis: basisType });
-            }
+            moldingCustomItems.push({ id: Date.now(), name: label, amount: defaultAmount, basis: basisType });
             renderMoldingCustomList();
             calculateAll(true, true);
             showToast(`Item "${label}" ditambahkan!`);
@@ -2221,6 +2355,158 @@
         function removeMoldingCustomItem(idx) {
             moldingCustomItems.splice(idx, 1);
             renderMoldingCustomList();
+            calculateAll(true, true);
+        }
+
+        // Dynamic External Finishing / Machining Items (Card Baru Subkon Eksternal) - Default KOSONG
+        let extFinishingItems = [];
+
+        function computeExtFinishingRow(item, rawQty, totalKg) {
+            const nominal = Math.max(0, Number(item.amount) || 0);
+            const basis = item.basis || 'PER_PCS';
+            let subtotalProject = 0;
+            let subHint = '';
+
+            if (basis === 'PER_PCS') {
+                subtotalProject = nominal * rawQty;
+                subHint = `× ${rawQty.toLocaleString('id-ID')} pcs`;
+            } else if (basis === 'PER_KG') {
+                subtotalProject = nominal * totalKg;
+                subHint = `× ${totalKg.toLocaleString('id-ID', {maximumFractionDigits:1})} kg`;
+            } else {
+                subtotalProject = nominal;
+                subHint = 'Flat 1x Projek';
+            }
+            return { nominal, subtotalProject, subHint };
+        }
+
+        function renderExtFinishingList() {
+            const container = document.getElementById('ext-finishing-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!extFinishingItems || extFinishingItems.length === 0) {
+                return;
+            }
+
+            const rawQty = Math.max(0, getNum('orderQty') || 0);
+            const rawNetW = Math.max(0, parseFloat(document.getElementById('netWeight').value) || 0);
+            const totalKg = rawQty * rawNetW;
+
+            extFinishingItems.forEach((item, idx) => {
+                const { nominal, subtotalProject, subHint } = computeExtFinishingRow(item, rawQty, totalKg);
+                const row = document.createElement('div');
+                row.className = 'grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-white p-2.5 rounded-lg border border-cyan-200 shadow-sm';
+                row.innerHTML = `
+                    <div class="sm:col-span-5">
+                        <input type="text" value="${item.name}" oninput="updateExtFinishingItem(${idx}, 'name', this.value)" placeholder="Contoh: Bubut Flange, Plating / Galvanis..." class="w-full px-2.5 py-1.5 text-xs font-semibold text-slate-800 border border-slate-300 rounded-lg focus:border-cyan-500 focus:outline-none">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <div class="flex items-stretch">
+                            <span class="bg-cyan-100 border border-r-0 border-cyan-300 text-cyan-900 text-[10px] font-bold px-2 py-1.5 rounded-l-lg flex items-center shrink-0">Rp</span>
+                            <input type="text" inputmode="numeric" placeholder="0" value="${Math.round(nominal).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateExtFinishingItem(${idx}, 'amount', this.value)" class="w-full min-w-0 px-2 py-1.5 text-xs font-mono font-bold text-right text-slate-900 border border-cyan-300 focus:border-cyan-500 focus:outline-none">
+                            <select onchange="updateExtFinishingItem(${idx}, 'basis', this.value)" class="bg-slate-100 border border-l-0 border-cyan-300 text-slate-800 text-[10px] font-bold px-2 py-1.5 rounded-r-lg shrink-0 cursor-pointer focus:outline-none">
+                                <option value="PER_PCS" ${item.basis === 'PER_PCS' ? 'selected' : ''}>Per Pcs</option>
+                                <option value="PER_KG" ${item.basis === 'PER_KG' ? 'selected' : ''}>Per Kg</option>
+                                <option value="PER_PROJECT" ${item.basis === 'PER_PROJECT' ? 'selected' : ''}>Total Projek (Flat)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-2 text-right">
+                        <span class="font-mono font-bold text-xs text-cyan-800 block ext-fin-subtotal">${formatRp(subtotalProject)}</span>
+                        <span class="text-[10px] font-mono text-slate-400 block ext-fin-hint">${subHint}</span>
+                    </div>
+                    <div class="sm:col-span-1 text-right sm:text-center">
+                        <button type="button" onclick="removeExtFinishingItem(${idx})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Hapus Baris Jasa Luar">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateExtFinishingItem(idx, field, rawVal) {
+            if (!extFinishingItems[idx]) return;
+            if (field === 'name' || field === 'basis') {
+                extFinishingItems[idx][field] = rawVal;
+            } else {
+                extFinishingItems[idx].amount = parseFloat(String(rawVal).replace(/\./g, '').replace(',', '.')) || 0;
+            }
+            if (field === 'basis') {
+                renderExtFinishingList();
+            }
+            calculateAll(true, true);
+            updateExtFinishingLiveCells();
+        }
+
+        function updateExtFinishingLiveCells() {
+            const container = document.getElementById('ext-finishing-list-container');
+            if (!container) return;
+            const rawQty = Math.max(0, getNum('orderQty') || 0);
+            const rawNetW = Math.max(0, parseFloat(document.getElementById('netWeight').value) || 0);
+            const totalKg = rawQty * rawNetW;
+            const rows = container.children;
+            extFinishingItems.forEach((item, idx) => {
+                const row = rows[idx];
+                if (!row) return;
+                const { subtotalProject, subHint } = computeExtFinishingRow(item, rawQty, totalKg);
+                const subEl = row.querySelector('.ext-fin-subtotal');
+                if (subEl) subEl.innerText = formatRp(subtotalProject);
+                const hintEl = row.querySelector('.ext-fin-hint');
+                if (hintEl) hintEl.innerText = subHint;
+            });
+        }
+
+        function addExtFinishingItem() {
+            if (!document.getElementById('chk-section-ext-finishing').checked) {
+                document.getElementById('chk-section-ext-finishing').checked = true;
+            }
+            extFinishingItems.push({
+                id: Date.now(),
+                name: '',
+                amount: 0,
+                basis: 'PER_PCS'
+            });
+            renderExtFinishingList();
+            calculateAll(true, true);
+        }
+
+        function addExtFinishingPreset(label, defaultAmount, basisType) {
+            if (!document.getElementById('chk-section-ext-finishing').checked) {
+                document.getElementById('chk-section-ext-finishing').checked = true;
+            }
+            extFinishingItems.push({
+                id: Date.now(),
+                name: label,
+                amount: defaultAmount,
+                basis: basisType
+            });
+            renderExtFinishingList();
+            calculateAll(true, true);
+            showToast(`Jasa luar "${label}" ditambahkan!`);
+        }
+
+        function removeExtFinishingItem(idx) {
+            extFinishingItems.splice(idx, 1);
+            renderExtFinishingList();
+            calculateAll(true, true);
+        }
+
+        function onTaxModeChange() {
+            const sel = document.getElementById('taxSelectMode').value;
+            const customWrap = document.getElementById('wrap-custom-tax-input');
+            const taxInput = document.getElementById('taxPct');
+
+            if (sel === 'CUSTOM') {
+                customWrap.classList.remove('hidden');
+                customWrap.classList.add('flex');
+                taxInput.focus();
+            } else {
+                customWrap.classList.add('hidden');
+                customWrap.classList.remove('flex');
+                taxInput.value = sel;
+            }
             calculateAll(true, true);
         }
 
@@ -2660,6 +2946,7 @@
             const titleSec5 = document.getElementById('title-sec5');
 
             const wrapInhouseReject = document.getElementById('wrap-inhouse-reject');
+            const wrapOverheadCol = document.getElementById('wrap-overhead-col');
             const wrapLogisticsCol = document.getElementById('wrap-logistics-col');
 
             if (mode === 'INHOUSE') {
@@ -2677,7 +2964,8 @@
                 document.getElementById('title-sec4').innerText = 'Peleburan & Proses Internal: Finishing, Machining & QC';
                 if (titleSec5) titleSec5.innerText = 'Risiko Reject Cor, Overhead, Kirim & Target Profit';
                 if (wrapInhouseReject) wrapInhouseReject.classList.remove('hidden');
-                if (wrapLogisticsCol) wrapLogisticsCol.className = 'sm:col-span-2';
+                if (wrapOverheadCol) wrapOverheadCol.className = 'sm:col-span-5';
+                if (wrapLogisticsCol) wrapLogisticsCol.className = 'sm:col-span-4';
                 syncYieldFromWeights();
             } else {
                 btnSubFull.className = 'text-left p-3.5 rounded-xl border-2 border-blue-600 bg-blue-50/60 transition flex flex-col justify-between';
@@ -2696,7 +2984,8 @@
                 document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
                 if (titleSec5) titleSec5.innerText = 'Overhead, Biaya Kirim & Target Profit';
                 if (wrapInhouseReject) wrapInhouseReject.classList.add('hidden');
-                if (wrapLogisticsCol) wrapLogisticsCol.className = 'sm:col-span-3';
+                if (wrapOverheadCol) wrapOverheadCol.className = 'sm:col-span-6';
+                if (wrapLogisticsCol) wrapLogisticsCol.className = 'sm:col-span-6';
                 onSubBasisChange();
             }
 
@@ -2944,6 +3233,7 @@
                 renderConsumablesList();
                 renderProjectLaborList();
                 renderMoldingCustomList();
+                renderExtFinishingList();
             }
             if (!skipSubTableRender && document.getElementById('subPricingBasis')?.value === 'DETAIL_TABLE') {
                 renderSubInvoiceTable();
@@ -3035,6 +3325,9 @@
 
             const isFinishingSectionActive = document.getElementById('chk-section-finishing').checked;
             document.getElementById('body-section-finishing').classList.toggle('section-disabled', !isFinishingSectionActive);
+
+            const isExtFinishingActive = document.getElementById('chk-section-ext-finishing').checked;
+            document.getElementById('body-section-ext-finishing').classList.toggle('section-disabled', !isExtFinishingActive);
 
             // 2. Read Master Prices based on selected grade
             const grade = document.getElementById('alloyGrade').value;
@@ -3230,7 +3523,29 @@
             document.getElementById('subtotal-consumables-badge').innerText =
                 `Projek: ${formatRp(totalConsumablesProject)} (${formatRp(totalConsumablesPerPcs)} /pcs)`;
 
-            const totalFinishingCost = laborFinishingPerPcs + totalConsumablesPerPcs;
+            const internalFinishingCostPerPcs = laborFinishingPerPcs + totalConsumablesPerPcs;
+
+            // 7C. External Subcontract Finishing & Machining Cost (Jasa Luar)
+            let extFinishingProjectTotal = 0;
+            let extFinishingPerPcs = 0;
+            const totalNetBatchKg = rawQty * rawNetW;
+
+            if (isExtFinishingActive && extFinishingItems && extFinishingItems.length > 0) {
+                extFinishingItems.forEach(item => {
+                    const { subtotalProject } = computeExtFinishingRow(item, rawQty, totalNetBatchKg);
+                    extFinishingProjectTotal += subtotalProject;
+                });
+                extFinishingPerPcs = rawQty > 0 ? (extFinishingProjectTotal / qty) : extFinishingProjectTotal;
+            }
+            updateExtFinishingLiveCells();
+            const elExtSummary = document.getElementById('lbl-ext-finishing-summary');
+            if (elExtSummary) {
+                elExtSummary.innerText = isExtFinishingActive
+                    ? `Total Projek: ${formatRp(extFinishingProjectTotal)} (${formatRp(extFinishingPerPcs)} /pcs)`
+                    : 'Non-Aktif (Rp 0)';
+            }
+
+            const totalFinishingCost = internalFinishingCostPerPcs + extFinishingPerPcs;
 
             // 8A. Calculate In-House HPP & Adaptive Overhead
             const inhouseDirectSubtotal = (rawQty > 0 && rawNetW > 0)
@@ -3263,9 +3578,18 @@
 
             const logisticsVal = getNum('logisticsVal');
             const logisticsBasis = document.getElementById('logisticsBasis').value;
-            const logisticsCostPerPcs = logisticsBasis === 'PER_PROJECT'
-                ? (rawQty > 0 ? (logisticsVal / qty) : logisticsVal)
-                : (rawNetW * logisticsVal);
+            let logisticsCostPerPcs = 0;
+            if (logisticsBasis === 'PER_PROJECT') {
+                logisticsCostPerPcs = rawQty > 0 ? (logisticsVal / qty) : logisticsVal;
+            } else if (logisticsBasis === 'PER_PCS') {
+                logisticsCostPerPcs = logisticsVal;
+            } else {
+                logisticsCostPerPcs = rawNetW * logisticsVal;
+            }
+            const lblLogHint = document.getElementById('lbl-logistics-calc-hint');
+            if (lblLogHint) {
+                lblLogHint.innerText = `= ${formatRp(logisticsCostPerPcs)} /pcs (Total: ${formatRp(rawQty > 0 ? (logisticsCostPerPcs * rawQty) : logisticsCostPerPcs)})`;
+            }
 
             const inhouseAfterReject = inhouseDirectSubtotal / (1 - (rejectPct / 100));
             const inhouseRejectAllowance = inhouseAfterReject - inhouseDirectSubtotal;
@@ -3521,11 +3845,9 @@
 
             // Update Active Modules Summary Status
             const moldStatus = isMoldingSectionActive ? 'Moulding ON' : 'Moulding OFF';
-            const finStatus = isFinishingSectionActive ? 'Finishing ON' : 'Finishing OFF';
-            const laborStatus = !isSubLaborActive
-                ? 'Upah OFF'
-                : (laborMode === 'PROJECT' ? 'Upah Total Projek' : (laborMode === 'DAILY' ? 'Upah Harian' : 'Upah Borongan Unit'));
-            document.getElementById('res-active-modules-summary').innerText = `${moldStatus} • ${finStatus} • ${laborStatus}`;
+            const finStatus = isFinishingSectionActive ? 'Finishing Internal ON' : 'Finishing Internal OFF';
+            const extFinStatus = isExtFinishingActive ? 'Jasa Luar ON' : 'Jasa Luar OFF';
+            document.getElementById('res-active-modules-summary').innerText = `${moldStatus} • ${finStatus} • ${extFinStatus}`;
 
             // Update Breakdown Details Dynamically based on Mode (Per Pcs & Total Order)
             document.getElementById('lbl-basis-net').innerText = rawNetW.toFixed(1);
@@ -3588,8 +3910,15 @@
             document.getElementById('desc-finishing').innerText = isFinishingSectionActive
                 ? `Upah (${formatRp(laborFinishingPerPcs)}) + Alat & Cat (${formatRp(totalConsumablesPerPcs)})`
                 : 'Non-Aktif (Rp 0)';
-            document.getElementById('val-finishing').innerHTML = `${formatRp(totalFinishingCost)} <span class="text-[10px] font-normal text-purple-600">/pcs</span>`;
-            document.getElementById('tot-finishing').innerText = `Total (${rawQty} pcs): ${formatRp(rawQty > 0 ? (totalFinishingCost * rawQty) : totalFinishingCost)}`;
+            document.getElementById('val-finishing').innerHTML = `${formatRp(internalFinishingCostPerPcs)} <span class="text-[10px] font-normal text-purple-600">/pcs</span>`;
+            document.getElementById('tot-finishing').innerText = `Total (${rawQty} pcs): ${formatRp(rawQty > 0 ? (internalFinishingCostPerPcs * rawQty) : internalFinishingCostPerPcs)}`;
+
+            const filledExtNames = extFinishingItems.filter(i => i.name || i.amount > 0).map(i => i.name || 'Jasa Luar').join(', ');
+            document.getElementById('desc-ext-finishing').innerText = isExtFinishingActive
+                ? (filledExtNames || 'Aktif (Rp 0)')
+                : 'Non-Aktif (Rp 0)';
+            document.getElementById('val-ext-finishing').innerHTML = `${formatRp(extFinishingPerPcs)} <span class="text-[10px] font-normal text-cyan-600">/pcs</span>`;
+            document.getElementById('tot-ext-finishing').innerText = `Total (${rawQty} pcs): ${formatRp(extFinishingProjectTotal)}`;
 
             document.getElementById('val-risk-ovh').innerHTML = `${formatRp(activeRiskOvhTotal)} <span class="text-[10px] font-normal text-rose-400">/pcs</span>`;
             document.getElementById('tot-risk-ovh').innerText = `Total (${rawQty} pcs): ${formatRp(rawQty > 0 ? (activeRiskOvhTotal * rawQty) : activeRiskOvhTotal)}`;
@@ -3717,6 +4046,7 @@
             renderSubInvoiceTable();
             renderSubCustomExtraList();
             renderMoldingCustomList();
+            renderExtFinishingList();
             renderOverheadDetailList();
             renderProjectLaborList();
             renderConsumablesList();
