@@ -178,8 +178,8 @@
                                 <div id="wrap-sub-scheme-select" class="sm:col-span-7">
                                     <label class="block text-xs font-semibold text-blue-900 mb-1">Cara Hitung Tagihan dari Vendor Subkon</label>
                                     <select id="subPricingBasis" onchange="onSubBasisChange()" class="w-full px-3 py-2 text-xs sm:text-sm border-2 border-blue-400 rounded-lg bg-white font-bold text-blue-950 focus:outline-none">
-                                        <option value="INVOICE_TOTAL">1. Langsung Input Total Invoice Subkon (Rp 1x Projek)</option>
-                                        <option value="PER_KG_RAW" selected>2. Per Kg Berat Mentah / Sebelum Finishing (Timbangan Subkon)</option>
+                                        <option value="INVOICE_TOTAL" selected>1. Langsung Input Total Invoice Subkon (Rp 1x Projek)</option>
+                                        <option value="PER_KG_RAW">2. Per Kg Berat Mentah / Sebelum Finishing (Timbangan Subkon)</option>
                                         <option value="PER_PCS">3. Harga Borongan Per Piece (Rp / Pcs)</option>
                                         <option value="PER_KG_NET">4. Per Kg Berat Bersih Produk Jadi</option>
                                     </select>
@@ -201,13 +201,13 @@
 
                             <!-- Row 2: Dynamic Inputs based on Selected Subkon Billing Method -->
                             <div id="wrap-sub-full-rate" class="bg-white p-3.5 rounded-xl border border-blue-200 space-y-3">
-                                <!-- Mode A: Direct Total Invoice -->
-                                <div id="sub-panel-invoice" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                <!-- Mode A: Direct Total Invoice (Default) -->
+                                <div id="sub-panel-invoice" class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                                     <div>
                                         <label class="block text-xs font-bold text-blue-900 mb-1">Total Tagihan / Invoice dari Vendor Subkon (Rp)</label>
                                         <div class="flex items-center">
                                             <span class="bg-blue-100 border border-r-0 border-blue-400 text-blue-900 text-xs font-bold px-3 py-2 rounded-l-lg">Rp</span>
-                                            <input type="text" inputmode="numeric" id="subInvoiceTotalRp" value="48.500.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-r-lg font-mono font-extrabold text-blue-950 bg-blue-50/20">
+                                            <input type="text" inputmode="numeric" id="subInvoiceTotalRp" value="46.200.000" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-blue-400 rounded-r-lg font-mono font-extrabold text-blue-950 bg-blue-50/20">
                                         </div>
                                     </div>
                                     <div class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
@@ -216,7 +216,7 @@
                                 </div>
 
                                 <!-- Mode B: Per Kg Raw Weight (Timbangan Mentah Sebelum Finishing) -->
-                                <div id="sub-panel-rawkg" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div id="sub-panel-rawkg" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
                                         <label class="block text-xs font-semibold text-slate-700 mb-1">Cara Input Berat Mentah Subkon</label>
                                         <select id="subRawWeightInputMode" onchange="onSubBasisChange()" class="w-full px-2.5 py-2 text-xs font-bold border border-slate-300 rounded-lg bg-slate-50 text-slate-800">
@@ -321,8 +321,8 @@
 
                                 <div class="bg-white p-2.5 rounded-lg border border-slate-200">
                                     <label class="block text-xs font-semibold text-slate-700 mb-1" title="Risiko ditemukan keropos saat proses pembubutan di tempat kita yang tidak diganti vendor">Risiko Keropos Saat Bubut (%)</label>
-                                    <input type="number" id="subHiddenDefectPct" value="2.0" min="0" max="30" step="0.5" oninput="calculateAll()" class="w-full px-2.5 py-1.5 text-xs sm:text-sm border border-rose-300 rounded-lg bg-rose-50/30 font-bold text-rose-800">
-                                    <span class="text-[10px] text-slate-400 block mt-1">Cadangan gagal saat machining</span>
+                                    <input type="number" id="subHiddenDefectPct" value="0" min="0" max="30" step="0.5" oninput="calculateAll()" class="w-full px-2.5 py-1.5 text-xs sm:text-sm border border-rose-300 rounded-lg bg-rose-50/30 font-bold text-rose-800">
+                                    <span class="text-[10px] text-slate-400 block mt-1">Cadangan gagal saat machining (Default: 0%)</span>
                                 </div>
                             </div>
                         </div>
@@ -334,7 +334,7 @@
                     <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
                         <div class="flex items-center gap-2.5">
                             <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">1</span>
-                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Spesifikasi Komponen & Casting Yield</h2>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec1">Spesifikasi Komponen & Casting Yield</h2>
                         </div>
                         <span id="yield-status-badge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">Yield: 71.4% (Normal)</span>
                     </div>
@@ -350,8 +350,8 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-                            <div>
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-2">
+                            <div class="sm:col-span-3">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Spesifikasi Material</label>
                                 <select id="alloyGrade" onchange="onGradeChange()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none font-medium">
                                     <option value="FC250">FC 250 (Cast Iron)</option>
@@ -361,22 +361,44 @@
                                     <option value="BRONZE">Bronze AB2 / Kuningan</option>
                                 </select>
                             </div>
-                            <div>
+                            <div class="sm:col-span-3">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Order (Pcs)</label>
-                                <input type="text" inputmode="numeric" id="orderQty" value="100" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none font-semibold">
+                                <input type="text" inputmode="numeric" id="orderQty" value="100" oninput="formatThousandInput(this); syncSubkonWeightInputs('QTY'); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none font-semibold">
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Berat bersih produk setelah saluran potong">Berat Bersih / Net (kg/pcs)</label>
-                                <input type="number" id="netWeight" value="25" min="0.1" step="0.1" oninput="syncYieldFromWeights()" class="w-full px-3 py-2 text-sm border border-emerald-400 bg-emerald-50/30 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-bold text-emerald-900">
+
+                            <!-- Tampilan Bobot saat Mode Cor Sendiri / Maklon -->
+                            <div id="wrap-weight-inhouse" class="sm:col-span-6 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1" title="Berat bersih produk setelah saluran potong">Berat Bersih / Net (kg/pcs)</label>
+                                    <input type="number" id="netWeight" value="25" min="0.1" step="0.1" oninput="syncYieldFromWeights()" class="w-full px-3 py-2 text-sm border border-emerald-400 bg-emerald-50/30 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-bold text-emerald-900">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1" title="Berat coran + saluran turun (sprue), runner, dan penambah (riser)">Berat Tuang / Gross (kg/pcs)</label>
+                                    <input type="number" id="grossWeight" value="35" min="0.1" step="0.1" oninput="syncYieldFromWeights()" class="w-full px-3 py-2 text-sm border border-orange-400 bg-orange-50/30 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none font-bold text-orange-900">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Berat coran + saluran turun (sprue), runner, dan penambah (riser)">Berat Tuang / Gross (kg/pcs)</label>
-                                <input type="number" id="grossWeight" value="35" min="0.1" step="0.1" oninput="syncYieldFromWeights()" class="w-full px-3 py-2 text-sm border border-orange-400 bg-orange-50/30 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none font-bold text-orange-900">
+
+                            <!-- Tampilan Bobot saat Mode Subkon (Hanya Berat Timbangan Jadi Barang oleh Subkon) -->
+                            <div id="wrap-weight-subkon" class="hidden sm:col-span-6 grid grid-cols-2 gap-3 bg-blue-50/60 p-2.5 rounded-xl border border-blue-200">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-blue-950 mb-1">Total Timbangan Jadi Subkon (1 Projek)</label>
+                                    <div class="flex items-center">
+                                        <input type="text" inputmode="decimal" id="subSpecTotalWeight" value="2.500" oninput="formatThousandInput(this); syncSubkonWeightInputs('TOTAL')" class="w-full px-2.5 py-1.5 text-sm border border-blue-400 bg-white rounded-l-lg font-bold text-blue-900">
+                                        <span class="bg-blue-100 border border-l-0 border-blue-400 text-blue-900 text-xs font-bold px-2 py-1.5 rounded-r-lg">kg</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-emerald-900 mb-1">Berat Timbangan per Pcs (Otomatis)</label>
+                                    <div class="flex items-center">
+                                        <input type="number" id="subSpecPcsWeight" value="25" min="0.1" step="0.1" oninput="syncSubkonWeightInputs('PCS')" class="w-full px-2.5 py-1.5 text-sm border border-emerald-400 bg-white rounded-l-lg font-bold text-emerald-900">
+                                        <span class="bg-emerald-100 border border-l-0 border-emerald-400 text-emerald-900 text-xs font-bold px-2 py-1.5 rounded-r-lg">kg/pcs</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Visual Yield Bar -->
-                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <!-- Visual Yield Bar (Hidden when Subkon Full) -->
+                        <div id="wrap-yield-bar" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                             <div class="flex justify-between text-xs mb-1.5">
                                 <span class="font-medium text-slate-600">Proporsi Logam Cair per Pcs:</span>
                                 <span class="font-semibold text-slate-700">Produk Jadi: <b id="lbl-net-w">25.0 kg</b> | Saluran & Riser (Return Scrap): <b id="lbl-gating-w" class="text-orange-600">10.0 kg</b></span>
@@ -577,28 +599,28 @@
                         <label class="flex items-center gap-2.5 cursor-pointer select-none">
                             <input type="checkbox" id="chk-section-finishing" checked onchange="calculateAll()" class="w-4 h-4 text-orange-600 rounded border-slate-300 focus:ring-orange-500">
                             <span class="bg-orange-100 text-orange-700 font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center">4</span>
-                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec4">Proses Internal Kita: Finishing, Machining & QC</h2>
+                            <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="title-sec4">Peleburan & Proses Internal: Finishing, Machining & QC</h2>
                         </label>
                         <span id="badge-sec4-status" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">Turunan bisa di-checklist</span>
                     </div>
                     <div id="body-section-finishing" class="p-5 space-y-5">
-                        <!-- Melting Energy & Refractory (Hidden when Subkon Full/Toll) -->
-                        <div id="melting-energy-inputs" class="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-200">
+                        <!-- In-House Melting Energy & Furnace Inputs -->
+                        <div id="melting-energy-inputs" class="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-100">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Konsumsi Listrik Lebur (kWh/ton cair)</label>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Konsumsi listrik tungku induksi per ton cairan">Konsumsi Listrik (kWh / Ton Cair)</label>
                                 <input type="text" inputmode="decimal" id="kwhPerTon" value="620" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Refraktori, Lining & Termokopel (Rp/kg cair)</label>
-                                <input type="text" inputmode="decimal" id="refractoryPerKg" value="350" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1" title="Lining tungku, bahan tahan api, kowi, termokopel">Refraktori & Lining (Rp/kg tuang)</label>
+                                <input type="text" inputmode="decimal" id="refractoryPerKg" value="650" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Upah Tim Cetak & Lebur (Rp/kg cair)</label>
-                                <input type="text" inputmode="decimal" id="laborMeltingPerKg" value="1.200" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Upah Tim Lebur & Tuang (Rp/kg tuang)</label>
+                                <input type="text" inputmode="decimal" id="meltingLaborPerKg" value="950" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                             </div>
                         </div>
 
-                        <!-- A. Tenaga Kerja & Jasa Finishing Dasar (Per Unit / Kg vs Harian) -->
+                        <!-- A. Tenaga Kerja & Jasa Finishing Dasar (Per Projek vs Per Unit/Kg vs Harian) -->
                         <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-4">
                             <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200 pb-2.5">
                                 <label class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-purple-900 cursor-pointer">
@@ -607,15 +629,33 @@
                                 </label>
                                 <div class="flex items-center gap-2">
                                     <span class="text-[11px] font-semibold text-slate-500">Metode Hitung Upah:</span>
-                                    <select id="laborCalcMode" onchange="onLaborModeChange()" class="text-xs font-bold bg-white border border-purple-300 text-purple-900 px-2.5 py-1 rounded-lg focus:outline-none">
-                                        <option value="UNIT">Borongan per Kg / per Pcs</option>
-                                        <option value="DAILY">Upah Harian (Jumlah Pekerja × Hari)</option>
+                                    <select id="laborCalcMode" onchange="onLaborModeChange()" class="text-xs font-bold bg-white border-2 border-purple-400 text-purple-950 px-2.5 py-1 rounded-lg focus:outline-none">
+                                        <option value="PROJECT" selected>1. Total Upah 1x Projek (Borongan Projek)</option>
+                                        <option value="UNIT">2. Borongan per Kg / per Pcs</option>
+                                        <option value="DAILY">3. Upah Harian (Jumlah Pekerja × Hari)</option>
                                     </select>
                                 </div>
                             </div>
 
+                            <!-- Mode 0: Total Project Lump Sum (Upah Per 1x Projek) -->
+                            <div id="labor-project-panel" class="space-y-2.5">
+                                <div class="text-[11px] text-slate-600 bg-purple-100/70 border border-purple-200 px-3 py-2 rounded-lg flex flex-wrap justify-between items-center gap-2">
+                                    <span>Masukkan <b>Total Upah 1 Projek</b> (cocok bila jam/hari kerja tidak tentu). Otomatis dibagi ke <b id="lbl-proj-labor-qty">100</b> pcs.</span>
+                                    <span class="font-bold text-purple-900" id="lbl-proj-labor-summary">Total Upah: Rp 0 (Rp 0 /pcs)</span>
+                                </div>
+                                <div id="project-labor-list-container" class="space-y-2">
+                                    <!-- Rendered dynamically via JS -->
+                                </div>
+                                <div class="pt-1 flex justify-between items-center">
+                                    <button type="button" onclick="addProjectLaborItem()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-plus"></i> Tambah Pos Upah Kerja Projek
+                                    </button>
+                                    <span class="text-[11px] text-slate-500">Centang pekerjaan yang dilakukan</span>
+                                </div>
+                            </div>
+
                             <!-- Mode 1: Unit / Piece Rate -->
-                            <div id="labor-unit-panel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div id="labor-unit-panel" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <div class="bg-white p-2.5 rounded-lg border border-slate-200">
                                     <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 mb-1.5 cursor-pointer">
                                         <input type="checkbox" id="chk-fettling" checked onchange="calculateAll()" class="w-3.5 h-3.5 text-purple-600 rounded">
@@ -739,26 +779,33 @@
                             <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Risiko Gagal Cor (Scrap Rate), Overhead & Margin</h2>
                         </div>
                     </div>
-                    <div class="p-5 grid grid-cols-2 sm:grid-cols-5 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1" title="Cadangan risiko cacat keropos/misrun">Cadangan Reject (%)</label>
-                            <input type="number" id="rejectRatePct" value="5" min="0" max="50" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-rose-300 bg-rose-50/30 rounded-lg font-semibold text-rose-900">
+                    <div class="p-5 grid grid-cols-1 sm:grid-cols-12 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1" title="Cadangan risiko cacat keropos/misrun">Reject (%)</label>
+                            <input type="number" id="rejectRatePct" value="0" min="0" max="50" step="0.5" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-rose-300 bg-rose-50/30 rounded-lg font-semibold text-rose-900">
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1" title="Penyusutan pabrik, manajemen, admin">Overhead Pabrik (%)</label>
-                            <input type="number" id="overheadPct" value="10" min="0" max="100" step="1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1" title="Penyusutan pabrik, manajemen, admin">Overhead (%)</label>
+                            <input type="number" id="overheadPct" value="0" min="0" max="100" step="1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Packing & Kirim (Rp/kg)</label>
-                            <input type="text" inputmode="decimal" id="logisticsPerKg" value="400" oninput="formatThousandInput(this); calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                        <div class="sm:col-span-4">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Packing & Kirim</label>
+                            <div class="flex items-center">
+                                <span class="bg-slate-100 border border-r-0 border-slate-300 text-slate-600 text-xs font-bold px-2 py-2 rounded-l-lg">Rp</span>
+                                <input type="text" inputmode="decimal" id="logisticsVal" value="0" oninput="formatThousandInput(this); calculateAll()" class="w-full px-2.5 py-2 text-sm border border-slate-300 font-mono font-semibold">
+                                <select id="logisticsBasis" onchange="calculateAll()" class="bg-slate-100 border border-l-0 border-slate-300 text-slate-800 text-xs font-bold px-2 py-2 rounded-r-lg">
+                                    <option value="PER_PROJECT">/ projek</option>
+                                    <option value="PER_KG">/ kg</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Target Margin Profit (%)</label>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Margin Profit (%)</label>
                             <input type="number" id="profitMarginPct" value="20" min="1" max="80" step="1" oninput="calculateAll()" class="w-full px-3 py-2 text-sm border border-emerald-400 bg-emerald-50/40 rounded-lg font-bold text-emerald-900">
                         </div>
-                        <div>
+                        <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold text-slate-600 mb-1">PPN (%)</label>
-                            <select id="taxPct" onchange="calculateAll()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white font-semibold">
+                            <select id="taxPct" onchange="calculateAll()" class="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg bg-white font-semibold">
                                 <option value="11">11% (PKP)</option>
                                 <option value="12">12% (PKP)</option>
                                 <option value="0">0% (Non-PKP)</option>
@@ -1254,7 +1301,14 @@
         // Current Production Mode ('INHOUSE' | 'SUB_FULL' | 'SUB_TOLL')
         let currentProdMode = 'INHOUSE';
 
-        // Customizable Consumables & Finishing Tools List
+        // Customizable Project-based Labor Items (Section 4A - Mode PROJECT)
+        let projectLaborItems = [
+            { id: 1, checked: true, name: 'Upah Tim Gerinda, Fettling, Dempul & Pengecatan (1 Projek)', costProject: 1500000 },
+            { id: 2, checked: true, name: 'Upah Operator Bubut / Machining (1 Projek)', costProject: 3000000 },
+            { id: 3, checked: true, name: 'Upah QC, Pengujian & Bantu Packing (1 Projek)', costProject: 350000 }
+        ];
+
+        // Customizable Consumables & Finishing Tools List (Section 4B)
         let consumableItems = [
             { id: 1, checked: true, name: 'Batu Gerinda Potong, Poles, Flap Disc & Amplas', costProject: 450000, costPcs: 4500 },
             { id: 2, checked: true, name: 'Pahat Bubut (Insert Carbide), Mata Bor/Tap, Coolant & APD', costProject: 500000, costPcs: 5000 },
@@ -1295,6 +1349,70 @@
             try {
                 el.setSelectionRange(newCursor, newCursor);
             } catch (e) {}
+        }
+
+        // Render Dynamic Project Labor List (Section 4A - Mode PROJECT)
+        function renderProjectLaborList() {
+            const container = document.getElementById('project-labor-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            projectLaborItems.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = `flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2.5 rounded-lg border ${item.checked ? 'border-purple-300' : 'border-slate-200 opacity-60'} transition`;
+                row.innerHTML = `
+                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleProjectLaborItem(${index}, this.checked)" class="w-4 h-4 text-purple-600 rounded cursor-pointer shrink-0">
+                    <input type="text" value="${item.name}" oninput="updateProjectLaborName(${index}, this.value)" placeholder="Nama pos upah kerja..." class="w-full sm:flex-1 px-2.5 py-1 text-xs font-semibold text-slate-800 border border-slate-200 rounded focus:outline-none focus:border-purple-500">
+                    <div class="flex items-center w-full sm:w-52 shrink-0">
+                        <span class="bg-purple-100 border border-r-0 border-purple-300 text-purple-900 text-[11px] font-bold px-2 py-1 rounded-l">Rp</span>
+                        <input type="text" inputmode="numeric" value="${Math.round(item.costProject).toLocaleString('id-ID')}" oninput="formatThousandInput(this); updateProjectLaborCost(${index}, this.value)" class="w-full px-2.5 py-1 text-xs font-mono font-bold text-right border border-purple-300 text-purple-950 focus:outline-none">
+                        <span class="bg-slate-100 border border-l-0 border-purple-300 text-slate-600 text-[10px] font-semibold px-2 py-1 rounded-r whitespace-nowrap">/ Projek</span>
+                    </div>
+                    <button type="button" onclick="removeProjectLaborItem(${index})" class="text-slate-400 hover:text-rose-600 px-1.5 py-1 transition" title="Hapus pos upah">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function toggleProjectLaborItem(idx, isChecked) {
+            if (projectLaborItems[idx]) {
+                projectLaborItems[idx].checked = isChecked;
+                renderProjectLaborList();
+                calculateAll(true);
+            }
+        }
+
+        function updateProjectLaborName(idx, val) {
+            if (projectLaborItems[idx]) {
+                projectLaborItems[idx].name = val;
+            }
+        }
+
+        function updateProjectLaborCost(idx, rawStr) {
+            if (!projectLaborItems[idx]) return;
+            const num = parseFloat(String(rawStr).replace(/\./g, '')) || 0;
+            projectLaborItems[idx].costProject = num;
+            calculateAll(true);
+        }
+
+        function addProjectLaborItem() {
+            projectLaborItems.push({
+                id: Date.now(),
+                checked: true,
+                name: 'Upah Kerja Tambahan / Lembur (1 Projek)',
+                costProject: 500000
+            });
+            renderProjectLaborList();
+            calculateAll(true);
+            showToast('Pos upah kerja projek baru ditambahkan!');
+        }
+
+        function removeProjectLaborItem(idx) {
+            projectLaborItems.splice(idx, 1);
+            renderProjectLaborList();
+            calculateAll(true);
         }
 
         // Render Dynamic Consumables List (Section 4B)
@@ -1376,14 +1494,43 @@
 
         function onLaborModeChange() {
             const mode = document.getElementById('laborCalcMode').value;
+            const projPanel = document.getElementById('labor-project-panel');
             const unitPanel = document.getElementById('labor-unit-panel');
             const dailyPanel = document.getElementById('labor-daily-panel');
-            if (mode === 'DAILY') {
-                unitPanel.classList.add('hidden');
-                dailyPanel.classList.remove('hidden');
-            } else {
-                unitPanel.classList.remove('hidden');
-                dailyPanel.classList.add('hidden');
+
+            projPanel.classList.toggle('hidden', mode !== 'PROJECT');
+            unitPanel.classList.toggle('hidden', mode !== 'UNIT');
+            dailyPanel.classList.toggle('hidden', mode !== 'DAILY');
+
+            calculateAll();
+        }
+
+        // Sync Subkon Weight Inputs in Section 1 (Total Weight <-> Per Pcs Weight)
+        function syncSubkonWeightInputs(source) {
+            const qty = Math.max(1, getNum('orderQty') || 1);
+            const totalEl = document.getElementById('subSpecTotalWeight');
+            const pcsEl = document.getElementById('subSpecPcsWeight');
+            const netEl = document.getElementById('netWeight');
+
+            if (source === 'TOTAL') {
+                const totW = Math.max(0.1, getNum('subSpecTotalWeight') || qty);
+                const pcsW = +(totW / qty).toFixed(2);
+                pcsEl.value = pcsW;
+                netEl.value = pcsW;
+                setFormattedVal('subTotalRawWeightKg', totW);
+                document.getElementById('subRawWeightPerPcs').value = pcsW;
+            } else if (source === 'PCS') {
+                const pcsW = Math.max(0.1, parseFloat(pcsEl.value) || 1);
+                const totW = Math.round(pcsW * qty);
+                setFormattedVal('subSpecTotalWeight', totW);
+                netEl.value = pcsW;
+                setFormattedVal('subTotalRawWeightKg', totW);
+                document.getElementById('subRawWeightPerPcs').value = pcsW;
+            } else if (source === 'QTY') {
+                const pcsW = Math.max(0.1, parseFloat(netEl.value) || 1);
+                const totW = Math.round(pcsW * qty);
+                setFormattedVal('subSpecTotalWeight', totW);
+                pcsEl.value = pcsW;
             }
             calculateAll();
         }
@@ -1437,6 +1584,12 @@
             const meltingEnergyInputs = document.getElementById('melting-energy-inputs');
             const pill = document.getElementById('mode-active-pill');
 
+            const wrapWeightInhouse = document.getElementById('wrap-weight-inhouse');
+            const wrapWeightSubkon = document.getElementById('wrap-weight-subkon');
+            const wrapYieldBar = document.getElementById('wrap-yield-bar');
+            const titleSec1 = document.getElementById('title-sec1');
+            const yieldBadge = document.getElementById('yield-status-badge');
+
             if (mode === 'INHOUSE') {
                 btnInhouse.className = 'text-left p-3 rounded-xl border-2 border-orange-600 bg-orange-50/60 transition flex flex-col justify-between';
                 pill.innerText = 'Cor Sendiri (In-House)';
@@ -1444,7 +1597,12 @@
                 secRaw.classList.remove('hidden');
                 moldingSandInputs.classList.remove('hidden');
                 meltingEnergyInputs.classList.remove('hidden');
+                wrapWeightInhouse.classList.remove('hidden');
+                wrapWeightSubkon.classList.add('hidden');
+                wrapYieldBar.classList.remove('hidden');
+                titleSec1.innerText = 'Spesifikasi Komponen & Casting Yield';
                 document.getElementById('title-sec4').innerText = 'Peleburan & Proses Internal: Finishing, Machining & QC';
+                syncYieldFromWeights();
             } else if (mode === 'SUB_FULL') {
                 btnSubFull.className = 'text-left p-3 rounded-xl border-2 border-blue-600 bg-blue-50/60 transition flex flex-col justify-between';
                 pill.innerText = 'Subkon Cor Luar + Finishing Internal';
@@ -1457,7 +1615,16 @@
                 secRaw.classList.add('hidden');
                 moldingSandInputs.classList.add('hidden');
                 meltingEnergyInputs.classList.add('hidden');
+
+                wrapWeightInhouse.classList.add('hidden');
+                wrapWeightSubkon.classList.remove('hidden');
+                wrapYieldBar.classList.add('hidden');
+                titleSec1.innerText = 'Spesifikasi Komponen & Berat Timbangan Subkon';
+                yieldBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800';
+                yieldBadge.innerText = 'Mode Subkon: Berat Timbangan Vendor';
+
                 document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
+                syncSubkonWeightInputs('QTY');
                 onSubBasisChange();
             } else if (mode === 'SUB_TOLL') {
                 btnSubToll.className = 'text-left p-3 rounded-xl border-2 border-purple-600 bg-purple-50/60 transition flex flex-col justify-between';
@@ -1471,7 +1638,12 @@
                 secRaw.classList.remove('hidden');
                 moldingSandInputs.classList.add('hidden');
                 meltingEnergyInputs.classList.add('hidden');
+                wrapWeightInhouse.classList.remove('hidden');
+                wrapWeightSubkon.classList.add('hidden');
+                wrapYieldBar.classList.remove('hidden');
+                titleSec1.innerText = 'Spesifikasi Komponen & Casting Yield';
                 document.getElementById('title-sec4').innerText = 'Proses Internal Kita: Finishing, Machining & QC';
+                syncYieldFromWeights();
             }
 
             calculateAll();
@@ -1571,6 +1743,10 @@
             if (gross < net) {
                 gross = net;
             }
+            const qty = Math.max(1, getNum('orderQty') || 1);
+            document.getElementById('subSpecPcsWeight').value = net;
+            setFormattedVal('subSpecTotalWeight', Math.round(net * qty));
+
             const yieldPct = (net / gross) * 100;
             const gatingWeight = Math.max(0, gross - net);
 
@@ -1578,16 +1754,18 @@
             document.getElementById('lbl-gating-w').innerText = gatingWeight.toFixed(1) + ' kg';
             document.getElementById('yield-bar-fill').style.width = Math.min(100, yieldPct).toFixed(1) + '%';
 
-            const badge = document.getElementById('yield-status-badge');
-            if (yieldPct >= 68) {
-                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700';
-                badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Efisien)`;
-            } else if (yieldPct >= 55) {
-                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700';
-                badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Moderat)`;
-            } else {
-                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700';
-                badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Boros Riser)`;
+            if (currentProdMode !== 'SUB_FULL') {
+                const badge = document.getElementById('yield-status-badge');
+                if (yieldPct >= 68) {
+                    badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700';
+                    badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Efisien)`;
+                } else if (yieldPct >= 55) {
+                    badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700';
+                    badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Moderat)`;
+                } else {
+                    badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700';
+                    badge.innerText = `Yield: ${yieldPct.toFixed(1)}% (Boros Riser)`;
+                }
             }
 
             calculateAll();
@@ -1662,6 +1840,7 @@
         function calculateAll(skipConsumableRender = false) {
             if (!skipConsumableRender) {
                 renderConsumablesList();
+                renderProjectLaborList();
             }
 
             // 1. Read Weights & Order Qty
@@ -1775,26 +1954,34 @@
             const sharedMouldingPatternCost = mouldingFeePerPcs + patternMaintPerPcs + patternAmortCost;
             const totalMoldingCost = sandAndCoreTotal + sharedMouldingPatternCost;
 
-            // 6. Melting Energy, Refractory & Labor
-            const kwhPerTon = getNum('kwhPerTon');
+            // 6. Melting Energy, Refractory & Melting Labor (In-House)
+            const kwhPerTon = getNum('kwhPerTon') || 600;
             const kwhRate = getNum('mst-kwh-rate') || 1450;
-            const refractoryPerKg = getNum('refractoryPerKg');
-            const laborMeltingPerKg = getNum('laborMeltingPerKg');
+            const refractoryPerKg = getNum('refractoryPerKg') || 0;
+            const meltingLaborPerKg = getNum('meltingLaborPerKg') || 0;
 
-            const electricityPerKgLiquid = (kwhPerTon / 1000) * kwhRate;
-            const totalMeltingCost = isFinishingSectionActive
-                ? requiredMeltWeight * (electricityPerKgLiquid + refractoryPerKg + laborMeltingPerKg)
-                : 0;
+            const electricityPerKgLiquid = (kwhPerTon * kwhRate) / 1000;
+            const totalMeltingCost = requiredMeltWeight * (electricityPerKgLiquid + refractoryPerKg + meltingLaborPerKg);
 
-            // 7A. Finishing, Machining & QC Labor (Unit vs Daily)
+            // 7A. Finishing, Machining & QC Labor (Project Total vs Unit vs Daily)
             let laborFinishingPerPcs = 0;
             const isSubLaborActive = isFinishingSectionActive && document.getElementById('chk-sub-labor').checked;
             const laborMode = document.getElementById('laborCalcMode').value;
 
             document.getElementById('lbl-daily-qty').innerText = qty.toLocaleString('id-ID');
+            document.getElementById('lbl-proj-labor-qty').innerText = qty.toLocaleString('id-ID');
 
             if (isSubLaborActive) {
-                if (laborMode === 'UNIT') {
+                if (laborMode === 'PROJECT') {
+                    let totalProjLabor = 0;
+                    projectLaborItems.forEach(item => {
+                        if (item.checked) {
+                            totalProjLabor += (item.costProject || 0);
+                        }
+                    });
+                    laborFinishingPerPcs = totalProjLabor / qty;
+                    document.getElementById('lbl-proj-labor-summary').innerText = `Total Upah: ${formatRp(totalProjLabor)} (${formatRp(laborFinishingPerPcs)} /pcs)`;
+                } else if (laborMode === 'UNIT') {
                     const fettCost = document.getElementById('chk-fettling').checked ? (netW * getNum('fettlingPerKg')) : 0;
                     const machCost = document.getElementById('chk-machining').checked ? getNum('machiningPerPcs') : 0;
                     const heatCost = document.getElementById('chk-heattreat').checked ? (netW * getNum('heatTreatPerKg')) : 0;
@@ -1825,6 +2012,7 @@
                     document.getElementById('lbl-daily-total-summary').innerText = `Total Upah: ${formatRp(totalDailyProject)} (${formatRp(laborFinishingPerPcs)} /pcs)`;
                 }
             } else {
+                document.getElementById('lbl-proj-labor-summary').innerText = 'Non-Aktif (Rp 0)';
                 document.getElementById('lbl-daily-total-summary').innerText = 'Non-Aktif (Rp 0)';
             }
 
@@ -1867,8 +2055,9 @@
             const inhouseDirectSubtotal = netMaterialCost + totalMoldingCost + totalMeltingCost + totalFinishingCost;
             const rejectPct = Math.min(80, parseFloat(document.getElementById('rejectRatePct').value) || 0);
             const overheadPct = parseFloat(document.getElementById('overheadPct').value) || 0;
-            const logisticsPerKg = getNum('logisticsPerKg');
-            const logisticsCostPerPcs = netW * logisticsPerKg;
+            const logisticsVal = getNum('logisticsVal');
+            const logisticsBasis = document.getElementById('logisticsBasis').value;
+            const logisticsCostPerPcs = logisticsBasis === 'PER_PROJECT' ? (logisticsVal / qty) : (netW * logisticsVal);
 
             const inhouseAfterReject = inhouseDirectSubtotal / (1 - (rejectPct / 100));
             const inhouseRejectAllowance = inhouseAfterReject - inhouseDirectSubtotal;
@@ -2072,7 +2261,7 @@
             const patternStatus = (isMoldingSectionActive && isNewPatternActive) ? 'Pola Baru ON' : 'Repeat Order (Tanpa Pola Baru)';
             const laborStatus = !isSubLaborActive
                 ? 'Upah OFF'
-                : (laborMode === 'DAILY' ? 'Upah Harian' : 'Upah Borongan');
+                : (laborMode === 'PROJECT' ? 'Upah Total Projek' : (laborMode === 'DAILY' ? 'Upah Harian' : 'Upah Borongan Unit'));
             document.getElementById('res-active-modules-summary').innerText = `${moldStatus} • ${patternStatus} • ${laborStatus}`;
 
             // Update Breakdown Details Dynamically based on Mode (Per Pcs & Total Order)
@@ -2146,7 +2335,7 @@
                 document.getElementById('tot-molding').innerText = `Total (${qty} pcs): ${formatRp(sharedMouldingPatternCost * qty)}`;
 
                 document.getElementById('title-row-c').innerText = 'C. Jasa Maklon Cetak-Lebur & Transport';
-                document.getElementById('desc-melting').innerText = `Jasa ${formatRp(subTollFeePerKg)}/kg + Transport ${formatRp(subTransportPerKg)}/kg`;
+                document.getElementById('desc-melting').innerText = `Jasa ${formatRp(subTollFeePerKg)}/kg + Transport ${formatRp(subTransportCostPerPcs)}/pcs`;
                 const tollPlusTrans = subTollServiceCost + subTransportCostPerPcs;
                 document.getElementById('val-melting').innerHTML = `${formatRp(tollPlusTrans)} <span class="text-[10px] font-normal text-slate-400">/pcs</span>`;
                 document.getElementById('tot-melting').innerText = `Total (${qty} pcs): ${formatRp(tollPlusTrans * qty)}`;
@@ -2317,6 +2506,7 @@
 
         // Initialize on Window Load
         window.onload = function() {
+            renderProjectLaborList();
             renderConsumablesList();
             syncYieldFromWeights();
             renderHistoryTable();
